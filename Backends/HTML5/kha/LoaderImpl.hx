@@ -175,28 +175,35 @@ class LoaderImpl {
 	}
 
 	public static function loadBlobFromDescription(desc: Dynamic, done: Blob -> Void, failed: AssetError -> Void) {
-#if kha_debug_html5
+	#if kha_debug_html5
 		var isUrl = desc.files[0].startsWith('http');
 
 		if (isUrl) {
 			loadRemote(desc, done, failed);
 		}
 		else {
-			var fs = untyped __js__("require('electron').remote.require('fs')");
-			var path = untyped __js__("require('electron').remote.require('path')");
-			var app = untyped __js__("require('electron').remote.require('electron').app");
-			var url = if (path.isAbsolute(desc.files[0])) desc.files[0] else path.join(app.getAppPath(), desc.files[0]);
-			fs.readFile(url, function (err, data) {
-				if (err != null) {
-					failed({ url: url, error: err });
-					return;
-				}
+			try
+			{
+				var fs = untyped __js__("require('electron').remote.require('fs')");
+				var path = untyped __js__("require('electron').remote.require('path')");
+				var app = untyped __js__("require('electron').remote.require('electron').app");
+				var url = if (path.isAbsolute(desc.files[0])) desc.files[0] else path.join(app.getAppPath(), desc.files[0]);
+				fs.readFile(url, function (err, data) {
+					if (err != null) {
+						failed({ url: url, error: err });
+						return;
+					}
 
-				var byteArray: Dynamic = untyped __js__("new Uint8Array(data)");
-				var bytes = Bytes.alloc(byteArray.byteLength);
-				for (i in 0...byteArray.byteLength) bytes.set(i, byteArray[i]);
-				done(new Blob(bytes));
-			});
+					var byteArray: Dynamic = untyped __js__("new Uint8Array(data)");
+					var bytes = Bytes.alloc(byteArray.byteLength);
+					for (i in 0...byteArray.byteLength) bytes.set(i, byteArray[i]);
+					done(new Blob(bytes));
+				});
+			}
+			catch(err:Dynamic)
+			{
+				loadRemote(desc, done, failed);
+			}
 		}
 #else
 		loadRemote(desc, done, failed);

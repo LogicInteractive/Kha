@@ -35,7 +35,7 @@ class Video extends kha.Video {
 		video.filenames = [];
 		for (filename in filenames) {
 			if (video.element.canPlayType("video/webm") != "" && filename.endsWith(".webm")) video.filenames.push(filename);
-#if !kha_debug_html5
+#if !kha_krom
 			if (video.element.canPlayType("video/mp4") != "" && filename.endsWith(".mp4")) video.filenames.push(filename);
 #end
 		}
@@ -44,6 +44,8 @@ class Video extends kha.Video {
 		video.element.addEventListener("canplaythrough", video.canPlayThroughListener, false);
 		
 		video.element.preload = "auto";
+		video.element.crossOrigin = "anonymous"; //Enable cross-origin playback of video
+		video.element.muted = true; //Enable auto-playback without user interact
 		video.element.src = video.filenames[0];
 	}
 
@@ -104,6 +106,17 @@ class Video extends kha.Video {
 		else {
 			return -1;
 		}
+	}
+	
+	override public function getVolume() : Float {
+		return element.volume;
+	}
+	
+	override public function setVolume(volume : Float) : Void { // [0, 1]
+		if (element.muted && volume > 0)
+			element.muted = false;
+			
+		element.volume = volume;
 	}
 	
 	private function errorListener(eventInfo: ErrorEvent): Void {
