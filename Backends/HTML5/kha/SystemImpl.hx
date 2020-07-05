@@ -64,16 +64,14 @@ class SystemImpl {
 	public static function init(options: SystemOptions, callback: Window -> Void): Void {
 		SystemImpl.options = options;
 		#if kha_debug_html5
-		Browser.window.onerror = cast SystemImpl.errorHandler;
-		
 		try
-		{
+			{
 			Browser.window.onerror = cast errorHandler;
 			var electron = Syntax.code("require('electron')");
 			if (electron.webFrame.setZoomLevelLimits != null) { // TODO: Figure out why this check is sometimes required
 				electron.webFrame.setZoomLevelLimits(1, 1);
 			}
-			var wndOpts = {
+				var wndOpts = {
 				type: 'showWindow', title: options.title,
 				x: options.window.x, y: options.window.y,
 				width: options.width, height: options.height,
