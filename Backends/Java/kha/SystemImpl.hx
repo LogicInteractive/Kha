@@ -470,4 +470,28 @@ class SystemImpl {
 	public static function allowUserChange(): Void {
 
 	}
+
+	public static function login(): Void {
+
+	}
+
+	public static function automaticSafeZone(): Bool {
+		return true;
+	}
+
+	public static function setSafeZone(value: Float): Void {
+
+	}
+
+	public static function unlockAchievement(id: Int): Void {
+
+	}
+
+	public static function getGamepadId(index: Int): String {
+		return "unkown";
+	}
+
+	public static function getGamepadVendor(index: Int): String {
+		return "unknown";
+	}
 }

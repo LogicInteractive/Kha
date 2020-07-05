@@ -134,8 +134,8 @@ class SystemImpl {
 		start = Krom.getTime();
 
 		haxe.Log.trace = function(v: Dynamic, ?infos: haxe.PosInfos) {
-			var message = infos != null ? infos.className + ":" + infos.lineNumber + ": " + v : Std.string(v);
-			Krom.log(message.substr(0, 512 - 1));
+			var message = haxe.Log.formatOutput(v, infos);
+			Krom.log(message);
 		};
 
 		new Window(0);
