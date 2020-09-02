@@ -1,10 +1,10 @@
 package kha.js;
 
+import js.html.CanvasRenderingContext2D;
 import kha.Color;
 import kha.graphics2.Graphics;
 import kha.graphics2.ImageScaleQuality;
 import kha.math.FastMatrix3;
-import js.html.CanvasRenderingContext2D;
 
 class CanvasGraphics extends Graphics {
 	private var canvas: CanvasRenderingContext2D;

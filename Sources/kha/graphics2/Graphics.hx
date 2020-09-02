@@ -3,8 +3,8 @@ package kha.graphics2;
 import kha.Color;
 import kha.FastFloat;
 import kha.Font;
-import kha.graphics4.PipelineState;
 import kha.Image;
+import kha.graphics4.PipelineState;
 import kha.math.FastMatrix3;
 
 class Graphics {

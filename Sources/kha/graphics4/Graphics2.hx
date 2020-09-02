@@ -1,12 +1,13 @@
 package kha.graphics4;
 
-import kha.arrays.Float32Array;
 import kha.Canvas;
 import kha.Color;
 import kha.FastFloat;
 import kha.Font;
-import kha.graphics2.ImageScaleQuality;
 import kha.Image;
+import kha.Shaders;
+import kha.arrays.Float32Array;
+import kha.graphics2.ImageScaleQuality;
 import kha.graphics4.BlendingOperation;
 import kha.graphics4.ConstantLocation;
 import kha.graphics4.CullMode;
@@ -26,7 +27,6 @@ import kha.math.FastVector2;
 import kha.math.Matrix3;
 import kha.math.Matrix4;
 import kha.math.Vector2;
-import kha.Shaders;
 import kha.simd.Float32x4;
 
 class InternalPipeline {
@@ -824,6 +824,7 @@ class Graphics2 extends kha.graphics2.Graphics {
 	private var coloredPainter: ColoredShaderPainter;
 	private var textPainter: TextShaderPainter;
 	private static var videoPipeline: PipelineState;
+	public static var videoPipelineCustom: PipelineState;
 	private var canvas: Canvas;
 	private var g: Graphics;
 	static var current: Graphics2 = null;
@@ -1161,7 +1162,13 @@ class Graphics2 extends kha.graphics2.Graphics {
 	}
 
 	override public function drawVideo(video: kha.Video, x: Float, y: Float, width: Float, height: Float): Void {
-		setPipeline(videoPipeline);
+
+		//This is a hack!! Another way would be much better
+		if (videoPipelineCustom==null)
+			setPipeline(videoPipeline);
+		else
+			setPipeline(videoPipelineCustom);
+
 		drawVideoInternal(video, x, y, width, height);
 		setPipeline(null);
 	}

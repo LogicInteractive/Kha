@@ -1,9 +1,10 @@
 package kha.js.graphics4;
 
-import kha.graphics4.StencilValue;
+import js.html.webgl.GL;
+import kha.Image;
+import kha.WebGLImage;
 import kha.arrays.Float32Array;
 import kha.arrays.Int32Array;
-import js.html.webgl.GL;
 import kha.graphics4.BlendingFactor;
 import kha.graphics4.BlendingOperation;
 import kha.graphics4.CompareMode;
@@ -13,18 +14,17 @@ import kha.graphics4.IndexBuffer;
 import kha.graphics4.MipMapFilter;
 import kha.graphics4.PipelineState;
 import kha.graphics4.StencilAction;
+import kha.graphics4.StencilValue;
 import kha.graphics4.TextureAddressing;
 import kha.graphics4.TextureFilter;
 import kha.graphics4.Usage;
 import kha.graphics4.VertexBuffer;
 import kha.graphics4.VertexStructure;
-import kha.Image;
 import kha.math.FastMatrix3;
 import kha.math.FastMatrix4;
 import kha.math.FastVector2;
 import kha.math.FastVector3;
 import kha.math.FastVector4;
-import kha.WebGLImage;
 
 class Graphics implements kha.graphics4.Graphics {
 	var currentPipeline: PipelineState = null;

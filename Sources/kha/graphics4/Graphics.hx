@@ -1,16 +1,16 @@
 package kha.graphics4;
 
-import kha.arrays.Float32Array;
-import kha.arrays.Int32Array;
 import kha.Color;
 import kha.FastFloat;
 import kha.Image;
+import kha.Video;
+import kha.arrays.Float32Array;
+import kha.arrays.Int32Array;
 import kha.math.FastMatrix3;
 import kha.math.FastMatrix4;
 import kha.math.FastVector2;
 import kha.math.FastVector3;
 import kha.math.FastVector4;
-import kha.Video;
 
 interface Graphics {
 	function begin(additionalRenderTargets: Array<Canvas> = null): Void;

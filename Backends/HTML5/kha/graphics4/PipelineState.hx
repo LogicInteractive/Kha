@@ -89,7 +89,7 @@ class PipelineState extends PipelineStateBase {
 	public function getConstantLocation(name: String): kha.graphics4.ConstantLocation {
 		var location = SystemImpl.gl.getUniformLocation(program, name);
 		if (location == null) {
-			trace("Warning: Uniform " + name + " not found.");
+			// trace("Warning: Uniform " + name + " not found.");
 		}
 		var type = GL.FLOAT;
 		var count: Int = SystemImpl.gl.getProgramParameter(program, GL.ACTIVE_UNIFORMS);
@@ -108,7 +108,7 @@ class PipelineState extends PipelineStateBase {
 		if (index < 0) {
 			var location = SystemImpl.gl.getUniformLocation(program, name);
 			if (location == null) {
-				trace("Warning: Sampler " + name + " not found.");
+				// trace("Warning: Sampler " + name + " not found.");
 			}
 			index = textures.length;
 			textureValues.push(location);
