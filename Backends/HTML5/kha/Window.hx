@@ -152,11 +152,11 @@ class Window {
 	public var title(get, set): String;
 
 	function get_title(): String {
-		return "Kha";
+		return return js.Browser.document.title;
 	}
 
 	function set_title(value: String): String {
-		return "Kha";
+		return js.Browser.document.title=value;
 	}
 
 	public function notifyOnResize(callback: Int->Int->Void): Void {}
