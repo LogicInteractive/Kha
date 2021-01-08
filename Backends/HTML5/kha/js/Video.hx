@@ -4,6 +4,7 @@ import js.Browser;
 import js.html.ErrorEvent;
 import js.html.Event;
 import js.html.MediaError;
+import js.html.MediaStreamEvent;
 import js.html.VideoElement;
 
 using StringTools;
@@ -42,11 +43,41 @@ class Video extends kha.Video {
 		
 		video.element.addEventListener("error", video.errorListener, false);
 		video.element.addEventListener("canplaythrough", video.canPlayThroughListener, false);
+		// video.element.addEventListener("abort", something, false);
+		// video.element.addEventListener("canplay", something, false);
+		// video.element.addEventListener("durationchange", something, false);
+		// video.element.addEventListener("emptied", something, false);
+		// video.element.addEventListener("encrypted", something, false);
+		// video.element.addEventListener("ended", something, false);
+		// video.element.addEventListener("interruptbegin", something, false);
+		// video.element.addEventListener("interruptend", something, false);
+		// video.element.addEventListener("loadeddata", something, false);
+		// video.element.addEventListener("loadstart", something, false);
+		// video.element.addEventListener("mozaudioavailable", something, false);
+		// video.element.addEventListener("pause", something, false);
+		// video.element.addEventListener("play", something, false);
+		// video.element.addEventListener("playing", something, false);
+		// video.element.addEventListener("progress", something, false);
+		// video.element.addEventListener("ratechange", something, false);
+		// video.element.addEventListener("seeked", something, false);
+		// video.element.addEventListener("seeking", something, false);
+		// video.element.addEventListener("stalled", something, false);
+		// video.element.addEventListener("suspend", something, false);
+		// video.element.addEventListener("timeupdate", something, false);
+		// video.element.addEventListener("volumechange", something, false);
+		// video.element.addEventListener("waiting", something, false);
+		video.element.addEventListener("loadedmetadata", onMetaDataLoaded, false);
 		
 		video.element.preload = "auto";
 		video.element.crossOrigin = "anonymous"; //Enable cross-origin playback of video
 		video.element.muted = true; //Enable auto-playback without user interact
 		video.element.src = video.filenames[0];
+	}
+
+	static public function onMetaDataLoaded(e:MediaStreamEvent)
+	{
+		var ve:VideoElement = cast e.target;
+		ve.play(); //Sometimes autplay fails; this should enforce it....
 	}
 
 	override public function width(): Int{
@@ -141,6 +172,7 @@ class Video extends kha.Video {
 	function finishAsset() {
 		element.removeEventListener("error", errorListener, false);
 		element.removeEventListener("canplaythrough", canPlayThroughListener, false);
+		element.removeEventListener("loadedmetadata", onMetaDataLoaded, false);
 		if (SystemImpl.gl != null) texture = Image.fromVideo(this);
 		done(this);
 	}
