@@ -1,7 +1,7 @@
 package kha;
 
-import haxe.io.Bytes;
 import haxe.Unserializer;
+import haxe.io.Bytes;
 
 using StringTools;
 
@@ -71,6 +71,11 @@ class Assets {
 	 * Moves from 0 to 1. Use for loading screens.
 	 */
 	public static var progress: Float;
+
+	public static function getLists():Array<Dynamic>
+	{
+		return [ImageList, SoundList, BlobList, FontList, VideoList];
+	}
 
 	/**
 	Loads all assets which were detected by khamake. When running khamake (doing so is Kha's standard build behavior)
