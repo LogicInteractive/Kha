@@ -1,15 +1,15 @@
 package kha;
 
-import js.Syntax;
+import haxe.io.Bytes;
 import js.Browser;
+import js.Syntax;
 import js.html.ImageElement;
 import js.html.XMLHttpRequest;
-import haxe.io.Bytes;
 import kha.Blob;
-import kha.js.WebAudioSound;
-import kha.js.MobileWebAudioSound;
 import kha.graphics4.TextureFormat;
 import kha.graphics4.Usage;
+import kha.js.MobileWebAudioSound;
+import kha.js.WebAudioSound;
 
 using StringTools;
 
@@ -38,18 +38,18 @@ class LoaderImpl {
 	public static function getSoundFormats(): Array<String> {
 		var element = Browser.document.createAudioElement();
 		var formats = new Array<String>();
-		#if !kha_debug_html5
+		// #if !kha_debug_html5
 		if (element.canPlayType("audio/mp4") != "") formats.push("mp4");
 		if (element.canPlayType("audio/mp3") != "") formats.push("mp3");
 		if (element.canPlayType("audio/wav") != "") formats.push("wav");
-		#end
+		// #end
 		if (SystemImpl._hasWebAudio || element.canPlayType("audio/ogg") != "") formats.push("ogg");
 		return formats;
 	}
 
 	public static function loadSoundFromDescription(desc: Dynamic, done: kha.Sound -> Void, failed: AssetError -> Void) {
 		if (SystemImpl._hasWebAudio) {
-			#if !kha_debug_html5
+			// #if !kha_debug_html5
 			var element = Browser.document.createAudioElement();
 			if (element.canPlayType("audio/mp4") != "") {
 				for (i in 0...desc.files.length) {
@@ -78,7 +78,7 @@ class LoaderImpl {
 					}
 				}
 			}
-			#end
+			// #end
 			for (i in 0...desc.files.length) {
 				var file: String = desc.files[i];
 				if (file.endsWith(".ogg")) {
@@ -102,6 +102,8 @@ class LoaderImpl {
 				for (i in 0...desc.files.length) {
 					var file: String = desc.files[i];
 					if (file.endsWith(".mp3")) {
+						trace(file);
+
 						new MobileWebAudioSound(file, done, failed);
 						return;
 					}
@@ -130,11 +132,11 @@ class LoaderImpl {
 	}
 
 	public static function getVideoFormats(): Array<String> {
-		#if kha_debug_html5
-		return ["webm"];
-		#else
+		// #if kha_debug_html5
+		// return ["webm"];
+		// #else
 		return ["mp4", "webm"];
-		#end
+		// #end
 	}
 
 	public static function loadVideoFromDescription(desc: Dynamic, done: kha.Video -> Void, failed: AssetError -> Void): Void {
