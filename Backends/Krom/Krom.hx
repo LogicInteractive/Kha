@@ -1,5 +1,5 @@
 extern class Krom {
-	static inline var KROM_API: Int = 5;
+	static inline var KROM_API: Int = 6;
 
 	static function clear(flags: Int, color: Int, depth: Float, stencil: Int): Void;
 
@@ -13,7 +13,9 @@ extern class Krom {
 	static function deleteShader(shader: Dynamic): Dynamic;
 	static function createPipeline(): Dynamic;
 	static function deletePipeline(pipeline: Dynamic): Dynamic;
-	static function compilePipeline(pipeline: Dynamic, structure0: Dynamic, structure1: Dynamic, structure2: Dynamic, structure3: Dynamic, length: Int, vertexShader: Dynamic, fragmentShader: Dynamic, geometryShader: Dynamic, tessellationControlShader: Dynamic, tessellationEvaluationShader: Dynamic, state: Dynamic): Void;
+	static function compilePipeline(pipeline: Dynamic, structure0: Dynamic, structure1: Dynamic, structure2: Dynamic, structure3: Dynamic, length: Int,
+		vertexShader: Dynamic, fragmentShader: Dynamic, geometryShader: Dynamic, tessellationControlShader: Dynamic, tessellationEvaluationShader: Dynamic,
+		state: Dynamic): Void;
 	static function setPipeline(pipeline: Dynamic): Void;
 	static function getConstantLocation(pipeline: Dynamic, name: String): Dynamic;
 	static function getTextureUnit(pipeline: Dynamic, name: String): Dynamic;
@@ -21,8 +23,10 @@ extern class Krom {
 	static function setRenderTarget(stage: kha.graphics4.TextureUnit, renderTarget: Dynamic): Void;
 	static function setTextureDepth(unit: kha.graphics4.TextureUnit, texture: Dynamic): Void;
 	static function setImageTexture(stage: kha.graphics4.TextureUnit, texture: Dynamic): Void;
-	static function setTextureParameters(texunit: kha.graphics4.TextureUnit, uAddressing: Int, vAddressing: Int, minificationFilter: Int, magnificationFilter: Int, mipmapFilter: Int): Void;
-	static function setTexture3DParameters(texunit: kha.graphics4.TextureUnit, uAddressing: Int, vAddressing: Int, wAddressing: Int, minificationFilter: Int, magnificationFilter: Int, mipmapFilter: Int): Void;
+	static function setTextureParameters(texunit: kha.graphics4.TextureUnit, uAddressing: Int, vAddressing: Int, minificationFilter: Int,
+		magnificationFilter: Int, mipmapFilter: Int): Void;
+	static function setTexture3DParameters(texunit: kha.graphics4.TextureUnit, uAddressing: Int, vAddressing: Int, wAddressing: Int, minificationFilter: Int,
+		magnificationFilter: Int, mipmapFilter: Int): Void;
 	static function setTextureCompareMode(texunit: kha.graphics4.TextureUnit, enabled: Bool): Void;
 	static function setCubeMapCompareMode(texunit: kha.graphics4.TextureUnit, enabled: Bool): Void;
 	static function setBool(location: kha.graphics4.ConstantLocation, value: Bool): Void;
@@ -65,8 +69,8 @@ extern class Krom {
 	static function setIndexBuffer(buffer: Dynamic): Void;
 	static function createVertexBuffer(count: Int, structure: Array<kha.graphics4.VertexElement>, usage: Int, instanceDataStepRate: Int): Dynamic;
 	static function deleteVertexBuffer(buffer: Dynamic): Dynamic;
-	static function lockVertexBuffer(buffer: Dynamic): kha.arrays.Float32Array;
-	static function unlockVertexBuffer(buffer: Dynamic): Void;
+	static function lockVertexBuffer(buffer: Dynamic, start: Int, count: Int): kha.arrays.Float32Array;
+	static function unlockVertexBuffer(buffer: Dynamic, count: Int): Void;
 	static function setVertexBuffer(buffer: Dynamic): Void;
 	static function setVertexBuffers(vertexBuffers: Array<kha.graphics4.VertexBuffer>): Void;
 	static function drawIndexedVertices(start: Int, count: Int): Void;
@@ -83,7 +87,8 @@ extern class Krom {
 	static function setCallback(callback: Void->Void): Void;
 	static function setDropFilesCallback(callback: String->Void): Void;
 	static function setCutCopyPasteCallback(cutCallback: Void->String, copyCallback: Void->String, pasteCallback: String->Void): Void;
-	static function setApplicationStateCallback(foregroundCallback: Void->Void, resumeCallback: Void->Void, pauseCallback: Void->Void, backgroundCallback: Void->Void, shutdownCallback: Void->Void): Void;
+	static function setApplicationStateCallback(foregroundCallback: Void->Void, resumeCallback: Void->Void, pauseCallback: Void->Void,
+		backgroundCallback: Void->Void, shutdownCallback: Void->Void): Void;
 	static function setKeyboardDownCallback(callback: Int->Void): Void;
 	static function setKeyboardUpCallback(callback: Int->Void): Void;
 	static function setKeyboardPressCallback(callback: Int->Void): Void;
@@ -139,8 +144,10 @@ extern class Krom {
 	static function setSampledTextureCompute(unit: kha.compute.TextureUnit, texture: Dynamic): Void;
 	static function setSampledRenderTargetCompute(unit: kha.compute.TextureUnit, renderTarget: Dynamic): Void;
 	static function setSampledDepthTextureCompute(unit: kha.compute.TextureUnit, texture: Dynamic): Void;
-	static function setTextureParametersCompute(texunit: kha.compute.TextureUnit, uAddressing: Int, vAddressing: Int, minificationFilter: Int, magnificationFilter: Int, mipmapFilter: Int): Void;
-	static function setTexture3DParametersCompute(texunit: kha.compute.TextureUnit, uAddressing: Int, vAddressing: Int, wAddressing: Int, minificationFilter: Int, magnificationFilter: Int, mipmapFilter: Int): Void;
+	static function setTextureParametersCompute(texunit: kha.compute.TextureUnit, uAddressing: Int, vAddressing: Int, minificationFilter: Int,
+		magnificationFilter: Int, mipmapFilter: Int): Void;
+	static function setTexture3DParametersCompute(texunit: kha.compute.TextureUnit, uAddressing: Int, vAddressing: Int, wAddressing: Int,
+		minificationFilter: Int, magnificationFilter: Int, mipmapFilter: Int): Void;
 	static function setShaderCompute(shader: Dynamic): Void;
 	static function deleteShaderCompute(shader: Dynamic): Void;
 	static function createShaderCompute(bytes: haxe.io.BytesData): Dynamic;

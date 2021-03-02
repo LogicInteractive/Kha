@@ -3,6 +3,8 @@
 		"kha.audio2.ogg",
 		"kha.graphics2.truetype",
 		"kha.graphics4.hxsl",
-		"kha.vr"
+		"js",
+		"hxcpp",
+		"kha.flash.utils"
 	]
 }

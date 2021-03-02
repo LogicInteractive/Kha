@@ -23,51 +23,51 @@ class Font implements Resource {
 		myStyle = style;
 		mySize = size;
 	}
-	
-	public var name(get, null): String;
-	
-	public function get_name(): String {
+
+	public var name(get, never): String;
+
+	function get_name(): String {
 		return myName;
 	}
-	
-	public var style(get, null): FontStyle;
-	
-	public function get_style(): FontStyle {
+
+	public var style(get, never): FontStyle;
+
+	function get_style(): FontStyle {
 		return myStyle;
 	}
-	
-	public var size(get, null): Float;
-	
-	public function get_size(): Float {
+
+	public var size(get, never): Float;
+
+	function get_size(): Float {
 		return mySize;
 	}
-	
+
 	@:functionCode('
 		return getFormat().Height;
 	')
-	public function getHeight() : Float {
+	public function getHeight(): Float {
 		return 0;
 	}
 
-	public function charWidth(ch : String) : Float {
+	public function charWidth(ch: String): Float {
 		return stringWidth(ch);
 	}
 
-	public function charsWidth(ch : String, offset : Int, length : Int) : Float {
+	public function charsWidth(ch: String, offset: Int, length: Int): Float {
 		return stringWidth(ch.substr(offset, length));
 	}
 
 	@:functionCode('
 		return getFormat(str).WidthIncludingTrailingWhitespace;
 	')
-	public function stringWidth(str : String) : Float {
+	public function stringWidth(str: String): Float {
 		return 0;
 	}
-	
+
 	@:functionCode('
 		return getFormat().Baseline;
 	')
-	public function getBaselinePosition() : Float {
+	public function getBaselinePosition(): Float {
 		return 0;
 	}
 }

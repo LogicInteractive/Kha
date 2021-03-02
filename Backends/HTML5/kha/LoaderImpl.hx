@@ -18,17 +18,18 @@ class LoaderImpl {
 		return ["png", "jpg", "hdr"];
 	}
 
-	public static function loadImageFromDescription(desc: Dynamic, done: kha.Image -> Void, failed: AssetError -> Void) {
+	public static function loadImageFromDescription(desc: Dynamic, done: kha.Image->Void, failed: AssetError->Void) {
 		var readable = Reflect.hasField(desc, "readable") ? desc.readable : false;
 		if (StringTools.endsWith(desc.files[0], ".hdr")) {
 			loadBlobFromDescription(desc, function(blob) {
 				var hdrImage = kha.internal.HdrFormat.parse(blob.toBytes());
-				done(Image.fromBytes(hdrImage.data.view.buffer, hdrImage.width, hdrImage.height, TextureFormat.RGBA128, readable ? Usage.DynamicUsage : Usage.StaticUsage));
+				done(Image.fromBytes(hdrImage.data.view.buffer, hdrImage.width, hdrImage.height, TextureFormat.RGBA128,
+					readable ? Usage.DynamicUsage : Usage.StaticUsage));
 			}, failed);
 		}
 		else {
 			var img: ImageElement = cast Browser.document.createElement("img");
-			img.onerror = function( event: Dynamic ) failed({ url: desc.files[0], error: event });
+			img.onerror = function(event: Dynamic) failed({url: desc.files[0], error: event});
 			img.onload = function(event: Dynamic) done(Image.fromImage(img, readable));
 			img.crossOrigin = "";
 			img.src = desc.files[0];
@@ -47,7 +48,7 @@ class LoaderImpl {
 		return formats;
 	}
 
-	public static function loadSoundFromDescription(desc: Dynamic, done: kha.Sound -> Void, failed: AssetError -> Void) {
+	public static function loadSoundFromDescription(desc: Dynamic, done: kha.Sound->Void, failed: AssetError->Void) {
 		if (SystemImpl._hasWebAudio) {
 			// #if !kha_debug_html5
 			var element = Browser.document.createAudioElement();
@@ -86,6 +87,10 @@ class LoaderImpl {
 					return;
 				}
 			}
+			failed({
+				url: desc.files.join(','),
+				error: "Unable to find sound files with supported audio formats",
+			});
 		}
 		else if (SystemImpl.mobile) {
 			var element = Browser.document.createAudioElement();
@@ -125,6 +130,10 @@ class LoaderImpl {
 					return;
 				}
 			}
+			failed({
+				url: desc.files.join(','),
+				error: "Unable to find sound files with supported audio formats",
+			});
 		}
 		else {
 			new kha.js.Sound(desc.files, done, failed);
@@ -139,19 +148,20 @@ class LoaderImpl {
 		// #end
 	}
 
-	public static function loadVideoFromDescription(desc: Dynamic, done: kha.Video -> Void, failed: AssetError -> Void): Void {
+	public static function loadVideoFromDescription(desc: Dynamic, done: kha.Video->Void, failed: AssetError->Void): Void {
 		kha.js.Video.fromFile(desc.files, done);
 	}
 
-	public static function loadRemote( desc: Dynamic, done: Blob -> Void, failed: AssetError -> Void ) {
+	public static function loadRemote(desc: Dynamic, done: Blob->Void, failed: AssetError->Void) {
 		var request = untyped new XMLHttpRequest();
 		request.open("GET", desc.files[0], true);
 		request.responseType = "arraybuffer";
 
 		request.onreadystatechange = function() {
-			if (request.readyState != 4) return;
-			if ((request.status >= 200 && request.status < 400) ||
-				(request.status == 0 && request.statusText == '')) { // Blobs loaded using --allow-file-access-from-files
+			if (request.readyState != 4)
+				return;
+			if ((request.status >= 200 && request.status < 400)
+				|| (request.status == 0 && request.statusText == '')) { // Blobs loaded using --allow-file-access-from-files
 				var bytes: Bytes = null;
 				var arrayBuffer = request.response;
 				if (arrayBuffer != null) {
@@ -161,17 +171,18 @@ class LoaderImpl {
 				else if (request.responseBody != null) {
 					var data: Dynamic = untyped Syntax.code("VBArray(request.responseBody).toArray()");
 					bytes = Bytes.alloc(data.length);
-					for (i in 0...data.length) bytes.set(i, data[i]);
+					for (i in 0...data.length)
+						bytes.set(i, data[i]);
 				}
 				else {
-					failed({ url: desc.files[0] });
+					failed({url: desc.files[0]});
 					return;
 				}
 
 				done(new Blob(bytes));
 			}
 			else {
-				failed({ url: desc.files[0] });
+				failed({url: desc.files[0]});
 			}
 		}
 		request.send(null);
@@ -208,32 +219,31 @@ class LoaderImpl {
 				loadRemote(desc, done, failed);
 			}
 		}
-#else
+		#else
 		loadRemote(desc, done, failed);
-#end
+		#end
 	}
 
-	public static function loadFontFromDescription(desc: Dynamic, done: Font -> Void, failed: AssetError -> Void): Void {
-		loadBlobFromDescription(desc, function (blob: Blob) {
+	public static function loadFontFromDescription(desc: Dynamic, done: Font->Void, failed: AssetError->Void): Void {
+		loadBlobFromDescription(desc, function(blob: Blob) {
 			done(new Font(blob));
 		}, failed);
 	}
-
 	/*override public function loadURL(url: String): Void {
-		// inDAgo hack
-		if (url.substr(0, 1) == '#')
-			Browser.location.hash = url.substr(1, url.length - 1);
-		else
-			Browser.window.open(url, "Kha");
-	}
+			// inDAgo hack
+			if (url.substr(0, 1) == '#')
+				Browser.location.hash = url.substr(1, url.length - 1);
+			else
+				Browser.window.open(url, "Kha");
+		}
 
-	override public function setNormalCursor() {
-		Mouse.SystemCursor = "default";
-		Mouse.UpdateSystemCursor();
-	}
+		override public function setNormalCursor() {
+			Mouse.SystemCursor = "default";
+			Mouse.UpdateSystemCursor();
+		}
 
-	override public function setHandCursor() {
-		Mouse.SystemCursor = "pointer";
-		Mouse.UpdateSystemCursor();
+		override public function setHandCursor() {
+			Mouse.SystemCursor = "pointer";
+			Mouse.UpdateSystemCursor();
 	}*/
 }
