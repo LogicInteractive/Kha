@@ -44,24 +44,26 @@ class SystemImpl {
 	public static var drawBuffers: Dynamic;
 	public static var elementIndexUint: Dynamic;
 	@:noCompletion public static var _hasWebAudio: Bool;
-	//public static var graphics(default, null): Graphics;
+	// public static var graphics(default, null): Graphics;
 	public static var khanvas: CanvasElement;
-	private static var options: SystemOptions;
+	static var options: SystemOptions;
 	public static var mobile: Bool = false;
 	public static var ios: Bool = false;
 	public static var mobileAudioPlaying: Bool = false;
-	private static var chrome: Bool = false;
-	private static var firefox: Bool = false;
-	private static var ie: Bool = false;
+	static var chrome: Bool = false;
+	static var firefox: Bool = false;
+	static var ie: Bool = false;
 	public static var insideInputEvent: Bool = false;
 	static var window: Window;
+	public static var estimatedRefreshRate: Int = 60;
 
-	private static function errorHandler(message: String, source: String, lineno: Int, colno: Int, error: Dynamic) {
-		Browser.console.error(error.stack);
+	static function errorHandler(message: String, source: String, lineno: Int, colno: Int, error: Dynamic) {
+		Browser.console.error("Error: " + message);
+		Browser.console.error("Stack:\n" + error.stack);
 		return true;
 	}
 
-	public static function init(options: SystemOptions, callback: Window -> Void): Void {
+	public static function init(options: SystemOptions, callback: Window->Void): Void {
 		SystemImpl.options = options;
 		#if kha_debug_html5
 		try
@@ -86,6 +88,9 @@ class SystemImpl {
 		Browser.window.setTimeout(function () {
 			initSecondStep(callback);
 		}, 1000);
+
+		chrome = true;
+		mobileAudioPlaying = true;
 		#else
 		mobile = isMobile();
 		ios = isIOS();
@@ -93,61 +98,52 @@ class SystemImpl {
 		firefox = isFirefox();
 		ie = isIE();
 
-		if (mobile || chrome || firefox) {
-			mobileAudioPlaying = false;
-		}
-		else {
-			mobileAudioPlaying = true;
-		}
+		mobileAudioPlaying = !mobile && !chrome && !firefox;
 
 		initSecondStep(callback);
 		#end
 	}
 
-	private static function initSecondStep(callback: Window -> Void): Void {
+	static function initSecondStep(callback: Window->Void): Void {
 		init2(options.window.width, options.window.height);
-		callback(window);
+		initAnimate(callback);
 	}
 
 	public static function initSensor(): Void {
 		if (ios) { // In Safari for iOS the directions are reversed on axes x, y and z
-			Browser.window.ondevicemotion = function (event: DeviceMotionEvent) {
+			Browser.window.ondevicemotion = function(event: DeviceMotionEvent) {
 				Sensor._changed(0, -event.accelerationIncludingGravity.x, -event.accelerationIncludingGravity.y, -event.accelerationIncludingGravity.z);
 			};
 		}
 		else {
-			Browser.window.ondevicemotion = function (event: DeviceMotionEvent) {
+			Browser.window.ondevicemotion = function(event: DeviceMotionEvent) {
 				Sensor._changed(0, event.accelerationIncludingGravity.x, event.accelerationIncludingGravity.y, event.accelerationIncludingGravity.z);
 			};
 		}
-		Browser.window.ondeviceorientation = function (event: DeviceOrientationEvent) {
+		Browser.window.ondeviceorientation = function(event: DeviceOrientationEvent) {
 			Sensor._changed(1, event.beta, event.gamma, event.alpha);
 		};
 	}
 
-	private static function isMobile(): Bool {
+	static function isMobile(): Bool {
 		var agent = js.Browser.navigator.userAgent;
-		if (agent.indexOf("Android") >= 0
-			|| agent.indexOf("webOS") >= 0
-			|| agent.indexOf("BlackBerry") >= 0
-			|| agent.indexOf("Windows Phone") >= 0) {
-				return true;
+		if (agent.indexOf("Android") >= 0 || agent.indexOf("webOS") >= 0 || agent.indexOf("BlackBerry") >= 0 || agent.indexOf("Windows Phone") >= 0) {
+			return true;
 		}
-		if (isIOS()) return true;
+		if (isIOS())
+			return true;
 		return false;
 	}
 
-	private static function isIOS(): Bool {
+	static function isIOS(): Bool {
 		var agent = js.Browser.navigator.userAgent;
-		if (agent.indexOf("iPhone") >= 0
-			|| agent.indexOf("iPad") >= 0
-			|| agent.indexOf("iPod") >= 0) {
-				return true;
+		if (agent.indexOf("iPhone") >= 0 || agent.indexOf("iPad") >= 0 || agent.indexOf("iPod") >= 0) {
+			return true;
 		}
 		return false;
 	}
 
-	private static function isChrome(): Bool {
+	static function isChrome(): Bool {
 		var agent = js.Browser.navigator.userAgent;
 		if (agent.indexOf("Chrome") >= 0) {
 			return true;
@@ -155,7 +151,7 @@ class SystemImpl {
 		return false;
 	}
 
-	private static function isFirefox(): Bool {
+	static function isFirefox(): Bool {
 		var agent = js.Browser.navigator.userAgent;
 		if (agent.indexOf("Firefox") >= 0) {
 			return true;
@@ -163,10 +159,9 @@ class SystemImpl {
 		return false;
 	}
 
-	private static function isIE(): Bool {
+	static function isIE(): Bool {
 		var agent = js.Browser.navigator.userAgent;
-		if (agent.indexOf("MSIE ") >= 0
-			|| agent.indexOf("Trident/") >= 0) {
+		if (agent.indexOf("MSIE ") >= 0 || agent.indexOf("Trident/") >= 0) {
 			return true;
 		}
 		return false;
@@ -189,7 +184,7 @@ class SystemImpl {
 		return "HTML5";
 	}
 
-	public static function vibrate(ms:Int): Void {
+	public static function vibrate(ms: Int): Void {
 		Browser.navigator.vibrate(ms);
 	}
 
@@ -203,24 +198,24 @@ class SystemImpl {
 		return true;
 	}
 
-	private static inline var maxGamepads: Int = 4;
-	private static var frame: Framebuffer;
-	private static var pressedKeys: Array<Bool>;
-	private static var keyboard: Keyboard = null;
-	private static var mouse: kha.input.Mouse;
-	private static var surface: Surface;
-	private static var gamepads: Array<Gamepad>;
-	private static var gamepadStates: Array<GamepadStates>;
+	static inline var maxGamepads: Int = 4;
+	static var frame: Framebuffer;
+	static var pressedKeys: Array<Bool>;
+	static var keyboard: Keyboard = null;
+	static var mouse: kha.input.Mouse;
+	static var surface: Surface;
+	static var gamepads: Array<Gamepad>;
+	static var gamepadStates: Array<GamepadStates>;
 
-	private static var minimumScroll:Int = 999;
-	private static var mouseX: Int;
-	private static var mouseY: Int;
-	private static var touchX: Int;
-	private static var touchY: Int;
-	private static var lastFirstTouchX: Int = 0;
-	private static var lastFirstTouchY: Int = 0;
+	static var minimumScroll: Int = 999;
+	static var mouseX: Int;
+	static var mouseY: Int;
+	static var touchX: Int;
+	static var touchY: Int;
+	static var lastFirstTouchX: Int = 0;
+	static var lastFirstTouchY: Int = 0;
 
-	public static function init2(defaultWidth: Int, defaultHeight: Int, ?backbufferFormat: TextureFormat) {
+	static function init2(defaultWidth: Int, defaultHeight: Int, ?backbufferFormat: TextureFormat) {
 		#if !kha_no_keyboard
 		keyboard = new Keyboard();
 		#end
@@ -232,35 +227,49 @@ class SystemImpl {
 			gamepads[i] = new Gamepad(i);
 			gamepadStates[i] = new GamepadStates();
 		}
-		js.Browser.window.addEventListener("gamepadconnected", function(e) {
+		js.Browser.window.addEventListener("gamepadconnected", (e) -> {
 			Gamepad.sendConnectEvent(e.gamepad.index);
 		});
-		js.Browser.window.addEventListener("gamepaddisconnected", function(e) {
+		js.Browser.window.addEventListener("gamepaddisconnected", (e) -> {
 			Gamepad.sendDisconnectEvent(e.gamepad.index);
 		});
+		var sysGamepads = getGamepads();
+		if (sysGamepads != null) {
+			for (i in 0...sysGamepads.length) {
+				var pad = sysGamepads[i];
+				if (pad != null) {
+					gamepads[pad.index].connected = true;
+				}
+			}
+		}
+
 		if (ie) {
 			pressedKeys = new Array<Bool>();
-			for (i in 0...256) pressedKeys.push(false);
-			for (i in 0...256) pressedKeys.push(null);
+			for (i in 0...256)
+				pressedKeys.push(false);
+			for (i in 0...256)
+				pressedKeys.push(null);
 		}
 
-		function onCopy(e: ClipboardEvent):Void {
+		function onCopy(e: ClipboardEvent): Void {
 			if (System.copyListener != null) {
 				var data = System.copyListener();
-				if (data != null) e.clipboardData.setData("text/plain", data);
+				if (data != null)
+					e.clipboardData.setData("text/plain", data);
 				e.preventDefault();
 			}
 		}
 
-		function onCut(e: ClipboardEvent):Void {
+		function onCut(e: ClipboardEvent): Void {
 			if (System.cutListener != null) {
 				var data = System.cutListener();
-				if (data != null) e.clipboardData.setData("text/plain", data);
+				if (data != null)
+					e.clipboardData.setData("text/plain", data);
 				e.preventDefault();
 			}
 		}
 
-		function onPaste(e: ClipboardEvent):Void {
+		function onPaste(e: ClipboardEvent): Void {
 			if (System.pasteListener != null) {
 				System.pasteListener(e.clipboardData.getData("text/plain"));
 				e.preventDefault();
@@ -279,13 +288,31 @@ class SystemImpl {
 		loadFinished(defaultWidth, defaultHeight);
 	}
 
+	public static function copyToClipboard(text: String) {
+		var textArea = Browser.document.createElement("textarea");
+		untyped textArea.value = text;
+		textArea.style.top = "0";
+		textArea.style.left = "0";
+		textArea.style.position = "fixed";
+		Browser.document.body.appendChild(textArea);
+		textArea.focus();
+		untyped textArea.select();
+		try {
+			Browser.document.execCommand('copy');
+		}
+		catch (err) {}
+		Browser.document.body.removeChild(textArea);
+	}
+
 	public static function getMouse(num: Int): Mouse {
-		if (num != 0) return null;
+		if (num != 0)
+			return null;
 		return mouse;
 	}
 
 	public static function getKeyboard(num: Int): Keyboard {
-		if (num != 0) return null;
+		if (num != 0)
+			return null;
 		return keyboard;
 	}
 
@@ -316,8 +343,9 @@ class SystemImpl {
 		}
 	}
 
-	private static function getCanvasElement(): CanvasElement {
-		if (khanvas != null) return khanvas;
+	static function getCanvasElement(): CanvasElement {
+		if (khanvas != null)
+			return khanvas;
 		// Only consider custom canvas ID for release builds
 		#if (kha_debug_html5 || !canvas_id)
 		return cast Browser.document.getElementById("khanvas");
@@ -326,7 +354,7 @@ class SystemImpl {
 		#end
 	}
 
-	private static function loadFinished(defaultWidth: Int, defaultHeight: Int) {
+	static function loadFinished(defaultWidth: Int, defaultHeight: Int) {
 		var canvas: CanvasElement = getCanvasElement();
 		canvas.style.cursor = "default";
 
@@ -334,7 +362,12 @@ class SystemImpl {
 
 		#if kha_webgl
 		try {
-			SystemImpl.gl = canvas.getContext("webgl2", { alpha: false, antialias: options.framebuffer.samplesPerPixel > 1, stencil: true}); // preserveDrawingBuffer: true } ); Warning: preserveDrawingBuffer can cause huge performance issues on mobile browsers
+			SystemImpl.gl = canvas.getContext("webgl2",
+				{
+					alpha: false,
+					antialias: options.framebuffer.samplesPerPixel > 1,
+					stencil: true
+				}); // preserveDrawingBuffer: true } ); Warning: preserveDrawingBuffer can cause huge performance issues on mobile browsers
 			SystemImpl.gl.pixelStorei(GL.UNPACK_PREMULTIPLY_ALPHA_WEBGL, 1);
 
 			halfFloat = {HALF_FLOAT_OES: 0x140B}; // GL_HALF_FLOAT
@@ -345,19 +378,25 @@ class SystemImpl {
 			SystemImpl.gl.getExtension("OES_texture_float_linear");
 			SystemImpl.gl.getExtension("OES_texture_half_float_linear");
 			anisotropicFilter = SystemImpl.gl.getExtension("EXT_texture_filter_anisotropic");
-			if (anisotropicFilter == null) anisotropicFilter = SystemImpl.gl.getExtension("WEBKIT_EXT_texture_filter_anisotropic");
+			if (anisotropicFilter == null)
+				anisotropicFilter = SystemImpl.gl.getExtension("WEBKIT_EXT_texture_filter_anisotropic");
 
 			gl = true;
 			gl2 = true;
 			Shaders.init();
 		}
-		catch (e: Dynamic) {
+		catch (e:Dynamic) {
 			trace("Could not initialize WebGL 2, falling back to WebGL.");
 		}
 
 		if (!gl2) {
 			try {
-				SystemImpl.gl = canvas.getContext("experimental-webgl", { alpha: false, antialias: options.framebuffer.samplesPerPixel > 1, stencil: true}); // preserveDrawingBuffer: true } ); WARNING: preserveDrawingBuffer causes huge performance issues (on mobile browser)!
+				SystemImpl.gl = canvas.getContext("experimental-webgl",
+					{
+						alpha: false,
+						antialias: options.framebuffer.samplesPerPixel > 1,
+						stencil: true
+					}); // preserveDrawingBuffer: true } ); WARNING: preserveDrawingBuffer causes huge performance issues (on mobile browser)!
 				SystemImpl.gl.pixelStorei(GL.UNPACK_PREMULTIPLY_ALPHA_WEBGL, 1);
 				SystemImpl.gl.getExtension("OES_texture_float");
 				SystemImpl.gl.getExtension("OES_texture_float_linear");
@@ -367,24 +406,25 @@ class SystemImpl {
 				SystemImpl.gl.getExtension("EXT_shader_texture_lod");
 				SystemImpl.gl.getExtension("OES_standard_derivatives");
 				anisotropicFilter = SystemImpl.gl.getExtension("EXT_texture_filter_anisotropic");
-				if (anisotropicFilter == null) anisotropicFilter = SystemImpl.gl.getExtension("WEBKIT_EXT_texture_filter_anisotropic");
+				if (anisotropicFilter == null)
+					anisotropicFilter = SystemImpl.gl.getExtension("WEBKIT_EXT_texture_filter_anisotropic");
 				drawBuffers = SystemImpl.gl.getExtension('WEBGL_draw_buffers');
 				elementIndexUint = SystemImpl.gl.getExtension("OES_element_index_uint");
 				gl = true;
 				Shaders.init();
 			}
-			catch (e: Dynamic) {
+			catch (e:Dynamic) {
 				trace("Could not initialize WebGL, falling back to <canvas>.");
 			}
 		}
 		#end
 
 		setCanvas(canvas);
-		window = new Window(defaultWidth, defaultHeight, canvas);
+		window = new Window(0, defaultWidth, defaultHeight, canvas);
 
-		//var widthTransform: Float = canvas.width / Loader.the.width;
-		//var heightTransform: Float = canvas.height / Loader.the.height;
-		//var transform: Float = Math.min(widthTransform, heightTransform);
+		// var widthTransform: Float = canvas.width / Loader.the.width;
+		// var heightTransform: Float = canvas.height / Loader.the.height;
+		// var transform: Float = Math.min(widthTransform, heightTransform);
 		if (gl) {
 			var g4 = new kha.js.graphics4.Graphics();
 			frame = new Framebuffer(0, null, null, g4);
@@ -396,7 +436,7 @@ class SystemImpl {
 			frame = new Framebuffer(0, null, g2, null);
 			frame.init(new kha.graphics2.Graphics1(frame), g2, null);
 		}
-		//canvas.getContext("2d").scale(transform, transform);
+		// canvas.getContext("2d").scale(transform, transform);
 
 		if (!mobile && kha.audio2.Audio._init()) {
 			SystemImpl._hasWebAudio = true;
@@ -414,66 +454,11 @@ class SystemImpl {
 
 		kha.vr.VrInterface.instance = new VrInterface();
 
-		Scheduler.start();
-
-		var window: Dynamic = Browser.window;
-		var requestAnimationFrame = window.requestAnimationFrame;
-		if (requestAnimationFrame == null) requestAnimationFrame = window.mozRequestAnimationFrame;
-		if (requestAnimationFrame == null) requestAnimationFrame = window.webkitRequestAnimationFrame;
-		if (requestAnimationFrame == null) requestAnimationFrame = window.msRequestAnimationFrame;
-
-		function animate(timestamp) {
-			var window: Dynamic = Browser.window;
-			if (requestAnimationFrame == null) window.setTimeout(animate, 1000.0 / 60.0);
-			else requestAnimationFrame(animate);
-
-			var sysGamepads = getGamepads();
-			if (sysGamepads != null) {
-				for (i in 0...sysGamepads.length) {
-					var pad = sysGamepads[i];
-					if (pad != null) {
-						checkGamepad(pad);
-					}
-				}
-			}
-
-			Scheduler.executeFrame();
-
-			if (canvas.getContext != null) {
-
-				// Lookup the size the browser is displaying the canvas.
-				//TODO deal with window.devicePixelRatio ?
-				var displayWidth  = canvas.clientWidth;
-				var displayHeight = canvas.clientHeight;
-
-				// Check if the canvas is not the same size.
-				if (canvas.width  != displayWidth ||
-					canvas.height != displayHeight) {
-
-					// Make the canvas the same size
-					canvas.width  = displayWidth;
-					canvas.height = displayHeight;
-				}
-
-				System.render([frame]);
-				if (SystemImpl.gl != null) {
-					// Clear alpha for IE11
-					SystemImpl.gl.clearColor(1, 1, 1, 1);
-					SystemImpl.gl.colorMask(false, false, false, true);
-					SystemImpl.gl.clear(GL.COLOR_BUFFER_BIT);
-					SystemImpl.gl.colorMask(true, true, true, true);
-				}
-			}
-		}
-
-		if (requestAnimationFrame == null) window.setTimeout(animate, 1000.0 / 60.0);
-		else requestAnimationFrame(animate);
-
 		// Autofocus
 		canvas.focus();
 
 		#if kha_disable_context_menu
-		canvas.oncontextmenu = function (event: Dynamic) {
+		canvas.oncontextmenu = function(event: Dynamic) {
 			event.stopPropagation();
 			event.preventDefault();
 		}
@@ -481,7 +466,7 @@ class SystemImpl {
 
 		canvas.onmousedown = mouseDown;
 		canvas.onmousemove = mouseMove;
-		if(keyboard != null) {
+		if (keyboard != null) {
 			canvas.onkeydown = keyDown;
 			canvas.onkeyup = keyUp;
 			canvas.onkeypress = keyPress;
@@ -497,12 +482,12 @@ class SystemImpl {
 		canvas.addEventListener("touchmove", touchMove, false);
 		canvas.addEventListener("touchcancel", touchCancel, false);
 
-#if kha_debug_html5
-		Browser.document.addEventListener('dragover', function( event ) {
+		#if kha_debug_html5
+		Browser.document.addEventListener('dragover', function(event) {
 			event.preventDefault();
 		});
 
-		Browser.document.addEventListener('drop', function( event: js.html.DragEvent ) {
+		Browser.document.addEventListener('drop', function(event: js.html.DragEvent) {
 			event.preventDefault();
 
 			if (event.dataTransfer != null && event.dataTransfer.files != null) {
@@ -513,11 +498,164 @@ class SystemImpl {
 				}
 			}
 		});
-#end
+		#end
 
-		Browser.window.addEventListener("unload", function () {
+		Browser.window.addEventListener("unload", function() {
 			System.shutdown();
 		});
+	}
+
+	static function initAnimate(callback: Window->Void) {
+		var canvas: CanvasElement = getCanvasElement();
+
+		var window: Dynamic = Browser.window;
+		var requestAnimationFrame = window.requestAnimationFrame;
+		if (requestAnimationFrame == null)
+			requestAnimationFrame = window.mozRequestAnimationFrame;
+		if (requestAnimationFrame == null)
+			requestAnimationFrame = window.webkitRequestAnimationFrame;
+		if (requestAnimationFrame == null)
+			requestAnimationFrame = window.msRequestAnimationFrame;
+
+		function animate(timestamp) {
+			var window: Dynamic = Browser.window;
+			if (requestAnimationFrame == null)
+				window.setTimeout(animate, 1000.0 / 60.0);
+			else
+				requestAnimationFrame(animate);
+
+			var sysGamepads = getGamepads();
+			if (sysGamepads != null) {
+				for (i in 0...sysGamepads.length) {
+					var pad = sysGamepads[i];
+					if (pad != null) {
+						checkGamepad(pad);
+					}
+				}
+			}
+
+			Scheduler.executeFrame();
+
+			if (canvas.getContext != null) {
+				// Lookup the size the browser is displaying the canvas.
+				// TODO deal with window.devicePixelRatio ?
+				var displayWidth = canvas.clientWidth;
+				var displayHeight = canvas.clientHeight;
+
+				// Check if the canvas is not the same size.
+				if (canvas.width != displayWidth || canvas.height != displayHeight) {
+					// Make the canvas the same size
+					canvas.width = displayWidth;
+					canvas.height = displayHeight;
+				}
+
+				System.render([frame]);
+				if (SystemImpl.gl != null) {
+					// Clear alpha for IE11
+					SystemImpl.gl.clearColor(1, 1, 1, 1);
+					SystemImpl.gl.colorMask(false, false, false, true);
+					SystemImpl.gl.clear(GL.COLOR_BUFFER_BIT);
+					SystemImpl.gl.colorMask(true, true, true, true);
+				}
+			}
+		}
+
+		var initialTimestamp: Int = 0;
+		var prevTimestamp: Int = 0;
+		var currentSamples: Int = 0;
+		var timeDiffs: Array<Int> = [];
+
+		var SAMPLE_COUNT: Int = 90;
+		var MEAN_TRUNCATION_CUTOFF: Float = 1 / 3;
+
+		function roundToKnownRefreshRate(hz: Int): Int {
+			var hz30 = {low: 27, high: 33, target: 30};
+			var hz60 = {low: 57, high: 63, target: 60};
+			var hz75 = {low: 72, high: 78, target: 75};
+			var hz90 = {low: 87, high: 93, target: 90};
+			var hz120 = {low: 117, high: 123, target: 120};
+			var hz144 = {low: 141, high: 147, target: 144};
+			var hz240 = {low: 237, high: 243, target: 240};
+			var hz340 = {low: 337, high: 343, target: 340};
+			var hz360 = {low: 357, high: 363, target: 360};
+
+			var rates = [hz30, hz60, hz75, hz90, hz120, hz144, hz240, hz340, hz360];
+
+			var nearestHz = hz;
+			for (rate in rates) {
+				if (hz >= rate.low && hz <= rate.high) {
+					nearestHz = rate.target;
+				}
+			}
+
+			return nearestHz;
+		}
+
+		// HTML5 has no real way to query the actual monitor refresh rate
+		// The only thing that can be done is attempt to measure the interval between requestAnimationFrame calls
+		// Without requestAnimationFrame we're out of luck
+		// We try and make a best guess while nothing intensive is happening
+		function detectRefreshRate(timestamp) {
+			var window: Dynamic = Browser.window;
+
+			if (initialTimestamp == 0) {
+				initialTimestamp = timestamp;
+			}
+			var timeDifferential = (timestamp - prevTimestamp) - initialTimestamp;
+			prevTimestamp = timestamp - initialTimestamp;
+
+			if (timeDifferential != 0) {
+				timeDiffs.push(timeDifferential);
+			}
+
+			if (currentSamples < SAMPLE_COUNT) {
+				currentSamples++;
+
+				if (requestAnimationFrame == null)
+					window.setTimeout(detectRefreshRate, 1000.0 / 60.0);
+				else
+					requestAnimationFrame(detectRefreshRate);
+			}
+			else {
+				// Remove extreme frametime values before averaging
+				{
+					haxe.ds.ArraySort.sort(timeDiffs, (a, b) -> {
+						a - b;
+					});
+
+					var truncatedTimeDiffs: Array<Int> = [];
+					var cutoff = Math.round(timeDiffs.length * MEAN_TRUNCATION_CUTOFF);
+					for (i in cutoff...timeDiffs.length - cutoff) {
+						truncatedTimeDiffs.push(timeDiffs[i]);
+					}
+
+					var total = 0;
+					for (time in truncatedTimeDiffs) {
+						total += time;
+					}
+
+					var avg = total / truncatedTimeDiffs.length;
+					// We may have an accurate frequency, but it might be possible to be off the actual refresh rate by a few hz
+					// Manually round to common refresh rates as well, just for security's sake
+					estimatedRefreshRate = roundToKnownRefreshRate(Math.round(1000 / avg));
+				}
+
+				Scheduler.start();
+
+				if (requestAnimationFrame == null)
+					window.setTimeout(animate, 1000.0 / 60.0);
+				else
+					requestAnimationFrame(animate);
+
+				callback(SystemImpl.window);
+			}
+		}
+
+		// Run through refresh rate detection first and then start animating
+		if (requestAnimationFrame == null)
+			window.setTimeout(detectRefreshRate, 1000.0 / 60.0);
+		else
+			requestAnimationFrame(detectRefreshRate);
 	}
 
 	public static function lockMouse(): Void {
@@ -556,7 +694,7 @@ class SystemImpl {
 			document.webkitPointerLockElement === kha_SystemImpl.khanvas");
 	}
 
-	public static function notifyOfMouseLockChange(func: Void -> Void, error: Void -> Void): Void{
+	public static function notifyOfMouseLockChange(func: Void->Void, error: Void->Void): Void {
 		js.Browser.document.addEventListener('pointerlockchange', func, false);
 		js.Browser.document.addEventListener('mozpointerlockchange', func, false);
 		js.Browser.document.addEventListener('webkitpointerlockchange', func, false);
@@ -566,7 +704,7 @@ class SystemImpl {
 		js.Browser.document.addEventListener('webkitpointerlockerror', error, false);
 	}
 
-	public static function removeFromMouseLockChange(func : Void -> Void, error  : Void -> Void) : Void{
+	public static function removeFromMouseLockChange(func: Void->Void, error: Void->Void): Void {
 		js.Browser.document.removeEventListener('pointerlockchange', func, false);
 		js.Browser.document.removeEventListener('mozpointerlockchange', func, false);
 		js.Browser.document.removeEventListener('webkitpointerlockchange', func, false);
@@ -576,7 +714,7 @@ class SystemImpl {
 		js.Browser.document.removeEventListener('webkitpointerlockerror', error, false);
 	}
 
-	private static function setMouseXY(event: MouseEvent): Void {
+	static function setMouseXY(event: MouseEvent): Void {
 		var rect = SystemImpl.khanvas.getBoundingClientRect();
 		var borderWidth = SystemImpl.khanvas.clientLeft;
 		var borderHeight = SystemImpl.khanvas.clientTop;
@@ -584,16 +722,17 @@ class SystemImpl {
 		mouseY = Std.int((event.clientY - rect.top - borderHeight) * SystemImpl.khanvas.height / (rect.height - 2 * borderHeight));
 	}
 
-	private static var iosSoundEnabled: Bool = false;
+	static var iosSoundEnabled: Bool = false;
 
-	private static function unlockiOSSound(): Void {
-		if (!ios || iosSoundEnabled) return;
+	static function unlockiOSSound(): Void {
+		if (!ios || iosSoundEnabled)
+			return;
 
 		var buffer = MobileWebAudio._context.createBuffer(1, 1, 22050);
 		var source = MobileWebAudio._context.createBufferSource();
 		source.buffer = buffer;
 		source.connect(MobileWebAudio._context.destination);
-		//untyped(if (source.noteOn) source.noteOn(0));
+		// untyped(if (source.noteOn) source.noteOn(0));
 		source.start();
 		source.stop();
 
@@ -623,11 +762,11 @@ class SystemImpl {
 		unlockiOSSound();
 	}
 
-	private static function mouseLeave():Void {
+	static function mouseLeave(): Void {
 		mouse.sendLeaveEvent(0);
 	}
 
-	private static function mouseWheel(event: WheelEvent): Void {
+	static function mouseWheel(event: WheelEvent): Void {
 		unlockSound();
 		insideInputEvent = true;
 
@@ -635,11 +774,12 @@ class SystemImpl {
 			case Full:
 				event.preventDefault();
 			case Custom(func):
-				if (func(event)) event.preventDefault();
+				if (func(event))
+					event.preventDefault();
 			case None:
 		}
 
-		//Deltamode == 0, deltaY is in pixels.
+		// Deltamode == 0, deltaY is in pixels.
 		if (event.deltaMode == 0) {
 			if (event.deltaY < 0) {
 				mouse.sendWheelEvent(0, -1);
@@ -651,7 +791,7 @@ class SystemImpl {
 			return;
 		}
 
-		//Lines
+		// Lines
 		if (event.deltaMode == 1) {
 			minimumScroll = Std.int(Math.min(minimumScroll, Math.abs(event.deltaY)));
 			mouse.sendWheelEvent(0, Std.int(event.deltaY / minimumScroll));
@@ -662,15 +802,15 @@ class SystemImpl {
 		return;
 	}
 
-	private static function mouseDown(event: MouseEvent): Void {
+	static function mouseDown(event: MouseEvent): Void {
 		insideInputEvent = true;
 		unlockSound();
 
 		setMouseXY(event);
-		if (event.which == 1) { //left button
+		if (event.which == 1) { // left button
 			mouse.sendDownEvent(0, 0, mouseX, mouseY);
 
-			if (khanvas.setCapture != null)  {
+			if (khanvas.setCapture != null) {
 				khanvas.setCapture();
 			}
 			else {
@@ -678,21 +818,30 @@ class SystemImpl {
 			}
 			khanvas.ownerDocument.addEventListener('mouseup', mouseLeftUp);
 		}
-		else if(event.which == 2) { //middle button
+		else if (event.which == 2) { // middle button
 			mouse.sendDownEvent(0, 2, mouseX, mouseY);
 			khanvas.ownerDocument.addEventListener('mouseup', mouseMiddleUp);
 		}
-		else if(event.which == 3) { //right button
+		else if (event.which == 3) { // right button
 			mouse.sendDownEvent(0, 1, mouseX, mouseY);
 			khanvas.ownerDocument.addEventListener('mouseup', mouseRightUp);
+		}
+		else if (event.which == 4) { // backwards sidebutton
+			mouse.sendDownEvent(0, 3, mouseX, mouseY);
+			khanvas.ownerDocument.addEventListener('mouseup', mouseBackUp);
+		}
+		else if (event.which == 5) { // forwards sidebutton
+			mouse.sendDownEvent(0, 4, mouseX, mouseY);
+			khanvas.ownerDocument.addEventListener('mouseup', mouseForwardUp);
 		}
 		insideInputEvent = false;
 	}
 
-	private static function mouseLeftUp(event: MouseEvent): Void {
+	static function mouseLeftUp(event: MouseEvent): Void {
 		unlockSound();
 
-		if (event.which != 1) return;
+		if (event.which != 1)
+			return;
 
 		insideInputEvent = true;
 		khanvas.ownerDocument.removeEventListener('mouseup', mouseLeftUp);
@@ -708,10 +857,11 @@ class SystemImpl {
 		insideInputEvent = false;
 	}
 
-	private static function mouseMiddleUp(event: MouseEvent): Void {
+	static function mouseMiddleUp(event: MouseEvent): Void {
 		unlockSound();
 
-		if (event.which != 2) return;
+		if (event.which != 2)
+			return;
 
 		insideInputEvent = true;
 		khanvas.ownerDocument.removeEventListener('mouseup', mouseMiddleUp);
@@ -719,10 +869,11 @@ class SystemImpl {
 		insideInputEvent = false;
 	}
 
-	private static function mouseRightUp(event: MouseEvent): Void {
+	static function mouseRightUp(event: MouseEvent): Void {
 		unlockSound();
 
-		if (event.which != 3) return;
+		if (event.which != 3)
+			return;
 
 		insideInputEvent = true;
 		khanvas.ownerDocument.removeEventListener('mouseup', mouseRightUp);
@@ -730,12 +881,36 @@ class SystemImpl {
 		insideInputEvent = false;
 	}
 
-	private static function documentMouseMove(event: MouseEvent): Void {
+	static function mouseBackUp(event: MouseEvent): Void {
+		unlockSound();
+
+		if (event.which != 4)
+			return;
+
+		insideInputEvent = true;
+		khanvas.ownerDocument.removeEventListener('mouseup', mouseBackUp);
+		mouse.sendUpEvent(0, 3, mouseX, mouseY);
+		insideInputEvent = false;
+	}
+
+	static function mouseForwardUp(event: MouseEvent): Void {
+		unlockSound();
+
+		if (event.which != 5)
+			return;
+
+		insideInputEvent = true;
+		khanvas.ownerDocument.removeEventListener('mouseup', mouseForwardUp);
+		mouse.sendUpEvent(0, 4, mouseX, mouseY);
+		insideInputEvent = false;
+	}
+
+	static function documentMouseMove(event: MouseEvent): Void {
 		event.stopPropagation();
 		mouseMove(event);
 	}
 
-	private static function mouseMove(event: MouseEvent): Void {
+	static function mouseMove(event: MouseEvent): Void {
 		insideInputEvent = true;
 
 		var lastMouseX = mouseX;
@@ -746,8 +921,10 @@ class SystemImpl {
 		var movementY = event.movementY;
 
 		if (event.movementX == null) {
-			movementX = (untyped event.mozMovementX != null) ? untyped event.mozMovementX : ((untyped event.webkitMovementX != null) ? untyped event.webkitMovementX : (mouseX  - lastMouseX));
-			movementY = (untyped event.mozMovementY != null) ? untyped event.mozMovementY : ((untyped event.webkitMovementY != null) ? untyped event.webkitMovementY : (mouseY  - lastMouseY));
+			movementX = (untyped event.mozMovementX != null) ? untyped event.mozMovementX : ((untyped event.webkitMovementX != null) ? untyped event.webkitMovementX : (mouseX
+				- lastMouseX));
+			movementY = (untyped event.mozMovementY != null) ? untyped event.mozMovementY : ((untyped event.webkitMovementY != null) ? untyped event.webkitMovementY : (mouseY
+				- lastMouseY));
 		}
 
 		// this ensures same behaviour across browser until they fix it
@@ -760,7 +937,7 @@ class SystemImpl {
 		insideInputEvent = false;
 	}
 
-	private static function setTouchXY(touch: Touch): Void {
+	static function setTouchXY(touch: Touch): Void {
 		var rect = SystemImpl.khanvas.getBoundingClientRect();
 		var borderWidth = SystemImpl.khanvas.clientLeft;
 		var borderHeight = SystemImpl.khanvas.clientTop;
@@ -768,9 +945,9 @@ class SystemImpl {
 		touchY = Std.int((touch.clientY - rect.top - borderHeight) * SystemImpl.khanvas.height / (rect.height - 2 * borderHeight));
 	}
 
-	private static var iosTouchs: Array<Int> = [];
+	static var iosTouchs: Array<Int> = [];
 
-	private static function touchDown(event: TouchEvent): Void {
+	static function touchDown(event: TouchEvent): Void {
 		insideInputEvent = true;
 		unlockSound();
 
@@ -780,16 +957,18 @@ class SystemImpl {
 			case Full:
 				event.preventDefault();
 			case Custom(func):
-				if (func(event)) event.preventDefault();
+				if (func(event))
+					event.preventDefault();
 			case None:
 		}
 
 		var index = 0;
-		for (touch in event.changedTouches)	{
+		for (touch in event.changedTouches) {
 			var id = touch.identifier;
 			if (ios) {
 				id = iosTouchs.indexOf(-1);
-				if (id == -1) id = iosTouchs.length;
+				if (id == -1)
+					id = iosTouchs.length;
 				iosTouchs[id] = touch.identifier;
 			}
 
@@ -805,11 +984,11 @@ class SystemImpl {
 		insideInputEvent = false;
 	}
 
-	private static function touchUp(event: TouchEvent): Void {
+	static function touchUp(event: TouchEvent): Void {
 		insideInputEvent = true;
 		unlockSound();
 
-		for (touch in event.changedTouches)	{
+		for (touch in event.changedTouches) {
 			var id = touch.identifier;
 			if (ios) {
 				id = iosTouchs.indexOf(id);
@@ -823,7 +1002,7 @@ class SystemImpl {
 		insideInputEvent = false;
 	}
 
-	private static function touchMove(event: TouchEvent): Void {
+	static function touchMove(event: TouchEvent): Void {
 		insideInputEvent = true;
 		unlockSound();
 
@@ -839,7 +1018,8 @@ class SystemImpl {
 				mouse.sendMoveEvent(0, touchX, touchY, movementX, movementY);
 			}
 			var id = touch.identifier;
-			if (ios) id = iosTouchs.indexOf(id);
+			if (ios)
+				id = iosTouchs.indexOf(id);
 
 			surface.sendMoveEvent(id, touchX, touchY);
 			index++;
@@ -847,13 +1027,14 @@ class SystemImpl {
 		insideInputEvent = false;
 	}
 
-	private static function touchCancel(event: TouchEvent): Void {
+	static function touchCancel(event: TouchEvent): Void {
 		insideInputEvent = true;
 		unlockSound();
 
-		for (touch in event.changedTouches)	{
+		for (touch in event.changedTouches) {
 			var id = touch.identifier;
-			if (ios) id = iosTouchs.indexOf(id);
+			if (ios)
+				id = iosTouchs.indexOf(id);
 
 			setTouchXY(touch);
 			mouse.sendUpEvent(0, 0, touchX, touchY);
@@ -863,19 +1044,20 @@ class SystemImpl {
 		insideInputEvent = false;
 	}
 
-	private static function onBlur() {
+	static function onBlur() {
 		// System.pause();
 		System.background();
 	}
 
-	private static function onFocus() {
+	static function onFocus() {
 		// System.resume();
 		System.foreground();
 	}
 
-	private static function keycodeToChar(key: String, keycode: Int, shift: Bool): String {
+	static function keycodeToChar(key: String, keycode: Int, shift: Bool): String {
 		if (key != null) {
-			if (key.length == 1) return key;
+			if (key.length == 1)
+				return key;
 			switch (key) {
 				case "Add":
 					return "+";
@@ -889,23 +1071,35 @@ class SystemImpl {
 		}
 		switch (keycode) {
 			case 187:
-				if (shift) return "*";
-				else return "+";
+				if (shift)
+					return "*";
+				else
+					return "+";
 			case 188:
-				if (shift) return ";";
-				else return ",";
+				if (shift)
+					return ";";
+				else
+					return ",";
 			case 189:
-				if (shift) return "_";
-				else return "-";
+				if (shift)
+					return "_";
+				else
+					return "-";
 			case 190:
-				if (shift) return ":";
-				else return ".";
+				if (shift)
+					return ":";
+				else
+					return ".";
 			case 191:
-				if (shift) return "'";
-				else return "#";
+				if (shift)
+					return "'";
+				else
+					return "#";
 			case 226:
-				if (shift) return ">";
-				else return "<";
+				if (shift)
+					return ">";
+				else
+					return "<";
 			case 106:
 				return "*";
 			case 107:
@@ -915,53 +1109,79 @@ class SystemImpl {
 			case 111:
 				return "/";
 			case 49:
-				if (shift) return "!";
-				else return "1";
+				if (shift)
+					return "!";
+				else
+					return "1";
 			case 50:
-				if (shift) return "\"";
-				else return "2";
+				if (shift)
+					return "\"";
+				else
+					return "2";
 			case 51:
-				if (shift) return "§";
-				else return "3";
+				if (shift)
+					return "§";
+				else
+					return "3";
 			case 52:
-				if (shift) return "$";
-				else return "4";
+				if (shift)
+					return "$";
+				else
+					return "4";
 			case 53:
-				if (shift) return "%";
-				else return "5";
+				if (shift)
+					return "%";
+				else
+					return "5";
 			case 54:
-				if (shift) return "&";
-				else return "6";
+				if (shift)
+					return "&";
+				else
+					return "6";
 			case 55:
-				if (shift) return "/";
-				else return "7";
+				if (shift)
+					return "/";
+				else
+					return "7";
 			case 56:
-				if (shift) return "(";
-				else return "8";
+				if (shift)
+					return "(";
+				else
+					return "8";
 			case 57:
-				if (shift) return ")";
-				else return "9";
+				if (shift)
+					return ")";
+				else
+					return "9";
 			case 48:
-				if (shift) return "=";
-				else return "0";
+				if (shift)
+					return "=";
+				else
+					return "0";
 			case 219:
-				if (shift) return "?";
-				else return "ß";
+				if (shift)
+					return "?";
+				else
+					return "ß";
 			case 212:
-				if (shift) return "`";
-				else return "´";
+				if (shift)
+					return "`";
+				else
+					return "´";
 		}
 		if (keycode >= 96 && keycode <= 105) { // num block
 			return String.fromCharCode('0'.code - 96 + keycode);
 		}
 		if (keycode >= 'A'.code && keycode <= 'Z'.code) {
-			if (shift) return String.fromCharCode(keycode);
-			else return String.fromCharCode(keycode - 'A'.code + 'a'.code);
+			if (shift)
+				return String.fromCharCode(keycode);
+			else
+				return String.fromCharCode(keycode - 'A'.code + 'a'.code);
 		}
 		return String.fromCharCode(keycode);
 	}
 
-	private static function keyDown(event: KeyboardEvent): Void {
+	static function keyDown(event: KeyboardEvent): Void {
 		insideInputEvent = true;
 		unlockSound();
 
@@ -971,7 +1191,8 @@ class SystemImpl {
 			case Full:
 				event.preventDefault();
 			case Custom(func):
-				if (func(cast event.keyCode)) event.preventDefault();
+				if (func(cast event.keyCode))
+					event.preventDefault();
 			case None:
 		}
 		event.stopPropagation();
@@ -983,8 +1204,8 @@ class SystemImpl {
 				return;
 			}
 			pressedKeys[event.keyCode] = true;
-
-		} else if (event.repeat) {
+		}
+		else if (event.repeat) {
 			event.preventDefault();
 			return;
 		}
@@ -1004,7 +1225,7 @@ class SystemImpl {
 		}
 	}
 
-	static function defaultKeyBlock(e: KeyboardEvent):Void {
+	static function defaultKeyBlock(e: KeyboardEvent): Void {
 		// block if ctrl key pressed
 		if (e.ctrlKey || e.metaKey) {
 			// except for cut-copy-paste
@@ -1019,20 +1240,23 @@ class SystemImpl {
 			return;
 		}
 		// allow F-keys
-		if (e.keyCode >= 112 && e.keyCode <= 123) return;
+		if (e.keyCode >= 112 && e.keyCode <= 123)
+			return;
 		// allow char keys
-		if (e.key == null || e.key.length == 1) return;
+		if (e.key == null || e.key.length == 1)
+			return;
 		e.preventDefault();
 	}
 
-	private static function keyUp(event: KeyboardEvent): Void {
+	static function keyUp(event: KeyboardEvent): Void {
 		insideInputEvent = true;
 		unlockSound();
 
 		event.preventDefault();
 		event.stopPropagation();
 
-		if (ie) pressedKeys[event.keyCode] = false;
+		if (ie)
+			pressedKeys[event.keyCode] = false;
 
 		var keyCode = fixedKeyCode(event);
 		keyboard.sendUpEvent(keyCode);
@@ -1040,11 +1264,12 @@ class SystemImpl {
 		insideInputEvent = false;
 	}
 
-	private static function keyPress(event: KeyboardEvent): Void {
+	static function keyPress(event: KeyboardEvent): Void {
 		insideInputEvent = true;
 		unlockSound();
 
-		if (event.which == 0) return; //for Firefox and Safari
+		if (event.which == 0)
+			return; // for Firefox and Safari
 		event.preventDefault();
 		event.stopPropagation();
 		keyboard.sendPressEvent(String.fromCharCode(event.which));
@@ -1060,7 +1285,7 @@ class SystemImpl {
 		");
 	}
 
-	public static function notifyOfFullscreenChange(func: Void -> Void, error: Void -> Void): Void {
+	public static function notifyOfFullscreenChange(func: Void->Void, error: Void->Void): Void {
 		js.Browser.document.addEventListener('fullscreenchange', func, false);
 		js.Browser.document.addEventListener('mozfullscreenchange', func, false);
 		js.Browser.document.addEventListener('webkitfullscreenchange', func, false);
@@ -1072,7 +1297,7 @@ class SystemImpl {
 		js.Browser.document.addEventListener('MSFullscreenError', error, false);
 	}
 
-	public static function removeFromFullscreenChange(func: Void -> Void, error: Void -> Void): Void {
+	public static function removeFromFullscreenChange(func: Void->Void, error: Void->Void): Void {
 		js.Browser.document.removeEventListener('fullscreenchange', func, false);
 		js.Browser.document.removeEventListener('mozfullscreenchange', func, false);
 		js.Browser.document.removeEventListener('webkitfullscreenchange', func, false);
@@ -1084,9 +1309,7 @@ class SystemImpl {
 		js.Browser.document.removeEventListener('MSFullscreenError', error, false);
 	}
 
-	public static function setKeepScreenOn(on: Bool): Void {
-
-	}
+	public static function setKeepScreenOn(on: Bool): Void {}
 
 	public static function loadUrl(url: String): Void {
 		js.Browser.window.open(url, "_blank");
@@ -1094,19 +1317,21 @@ class SystemImpl {
 
 	public static function getGamepadId(index: Int): String {
 		var sysGamepads = getGamepads();
-		if (sysGamepads != null &&  untyped sysGamepads[index]) {
-				return sysGamepads[index].id;
+		if (sysGamepads != null && untyped sysGamepads[index]) {
+			return sysGamepads[index].id;
 		}
 
-		return "unkown";
+		return "unknown";
 	}
 
 	public static function getGamepadVendor(index: Int): String {
 		return "unknown";
 	}
 
-	private static function getGamepads(): Array<js.html.Gamepad> {
-		if (chrome && kha.vr.VrInterface.instance.IsVrEnabled()) return null; // Chrome crashes if navigator.getGamepads() is called when using VR
+	static function getGamepads(): Array<js.html.Gamepad> {
+		if (chrome && kha.vr.VrInterface.instance != null && kha.vr.VrInterface.instance.IsVrEnabled()) {
+			return null; // Chrome crashes if navigator.getGamepads() is called when using VR
+		}
 
 		if (untyped navigator.getGamepads) {
 			return js.Browser.navigator.getGamepads();
@@ -1124,31 +1349,21 @@ class SystemImpl {
 		return 1.0;
 	}
 
-	public static function login(): Void {
-
-	}
+	public static function login(): Void {}
 
 	public static function automaticSafeZone(): Bool {
 		return true;
 	}
 
-	public static function setSafeZone(value: Float): Void {
+	public static function setSafeZone(value: Float): Void {}
 
-	}
-
-	public static function unlockAchievement(id: Int): Void {
-
-	}
+	public static function unlockAchievement(id: Int): Void {}
 
 	public static function waitingForLogin(): Bool {
 		return false;
 	}
 
-	public static function disallowUserChange(): Void {
+	public static function disallowUserChange(): Void {}
 
-	}
-
-	public static function allowUserChange(): Void {
-
-	}
+	public static function allowUserChange(): Void {}
 }

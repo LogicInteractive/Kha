@@ -3,9 +3,9 @@ package kha;
 class Display {
 	static var instance: Display = new Display();
 
-	function new() {
+	function new() {}
 
-	}
+	public static function init(): Void {}
 
 	public static var primary(get, never): Display;
 

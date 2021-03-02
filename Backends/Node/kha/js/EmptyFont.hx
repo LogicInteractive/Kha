@@ -4,34 +4,34 @@ import kha.Font;
 import kha.FontStyle;
 
 class EmptyFont implements Font {
-	private var myName: String;
-	private var myStyle: FontStyle;
-	private var mySize: Float;
-	
+	var myName: String;
+	var myStyle: FontStyle;
+	var mySize: Float;
+
 	public function new(name: String, style: FontStyle, size: Float) {
 		myName = name;
 		myStyle = style;
 		mySize = size;
 	}
-	
-	public var name(get, null): String;
-	
-	private function get_name(): String {
+
+	public var name(get, never): String;
+
+	function get_name(): String {
 		return myName;
 	}
-	
-	public var style(get, null): FontStyle;
-	
-	private function get_style(): FontStyle {
+
+	public var style(get, never): FontStyle;
+
+	function get_style(): FontStyle {
 		return myStyle;
 	}
-	
-	public var size(get, null): Float;
-	
-	private function get_size(): Float {
+
+	public var size(get, never): Float;
+
+	function get_size(): Float {
 		return mySize;
 	}
-	
+
 	public function getHeight(): Float {
 		return mySize;
 	}

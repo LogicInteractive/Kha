@@ -11,6 +11,7 @@ Kha is a low level sdk for building games and media applications in a portable w
 * [Blog](http://kode.tech)
 * [Forum](http://forum.kode.tech)
 * [Kha channel at kode.tech](https://kiwiirc.com/client/irc.kode.tech/#kha)
+* [Discord](http://discord.kode.tech)
 * [Games](https://github.com/Kode/Kha/wiki/Games-Built-With-Kha) built with Kha
 * [Engines](https://github.com/Kode/Kha/wiki/Engines-using-Kha) using Kha
 
