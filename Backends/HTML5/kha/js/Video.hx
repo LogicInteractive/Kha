@@ -4,7 +4,6 @@ import js.Browser;
 import js.html.ErrorEvent;
 import js.html.Event;
 import js.html.MediaError;
-import js.html.MediaStreamEvent;
 import js.html.VideoElement;
 
 using StringTools;
@@ -37,10 +36,12 @@ class Video extends kha.Video {
 
 		video.filenames = [];
 		for (filename in filenames) {
-			if (video.element.canPlayType("video/webm") != "" && filename.endsWith(".webm")) video.filenames.push(filename);
-#if !kha_krom
-			if (video.element.canPlayType("video/mp4") != "" && filename.endsWith(".mp4")) video.filenames.push(filename);
-#end
+			if (video.element.canPlayType("video/webm") != "" && filename.endsWith(".webm"))
+				video.filenames.push(filename);
+			#if !kha_krom
+			if (video.element.canPlayType("video/mp4") != "" && filename.endsWith(".mp4"))
+				video.filenames.push(filename);
+			#end
 		}
 
 		video.element.addEventListener("error", video.errorListener, false);
@@ -68,12 +69,11 @@ class Video extends kha.Video {
 		// video.element.addEventListener("timeupdate", something, false);
 		// video.element.addEventListener("volumechange", something, false);
 		// video.element.addEventListener("waiting", something, false);
-		video.element.addEventListener("loadedmetadata", onMetaDataLoaded, false);
-		
+		video.element.addEventListener("loadedmetadata", onMetaDataLoaded, false);		
 
 		video.element.preload = "auto";
 		video.element.crossOrigin = "anonymous"; //Enable cross-origin playback of video
-		video.element.muted = true; //Enable auto-playback without user interact
+		video.element.muted = true; //Enable auto-playback without user interact		
 		video.element.src = video.filenames[0];
 	}
 
@@ -83,7 +83,7 @@ class Video extends kha.Video {
 		ve.play(); //Sometimes autplay fails; this should enforce it....
 	}
 
-	override public function width(): Int{
+	override public function width(): Int {
 		return element.videoWidth;
 	}
 
@@ -138,6 +138,8 @@ class Video extends kha.Video {
 	}
 
 	override public function setVolume(volume: Float): Void {
+		if (element.muted && volume > 0)
+			element.muted = false;
 		element.volume = volume;
 	}
 
@@ -149,19 +151,8 @@ class Video extends kha.Video {
 			return -1;
 		}
 	}
-	
-	override public function getVolume() : Float {
-		return element.volume;
-	}
-	
-	override public function setVolume(volume : Float) : Void { // [0, 1]
-		if (element.muted && volume > 0)
-			element.muted = false;
-			
-		element.volume = volume;
-	}
-	
-	private function errorListener(eventInfo: ErrorEvent): Void {
+
+	function errorListener(eventInfo: ErrorEvent): Void {
 		if (element.error.code == MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED) {
 			for (i in 0...filenames.length - 1) {
 				if (element.src == filenames[i]) {
@@ -184,7 +175,7 @@ class Video extends kha.Video {
 		element.removeEventListener("error", errorListener, false);
 		element.removeEventListener("canplaythrough", canPlayThroughListener, false);
 		element.removeEventListener("loadedmetadata", onMetaDataLoaded, false);
-		if (SystemImpl.gl != null) 
+		if (SystemImpl.gl != null)
 			texture = Image.fromVideo(this);
 		done(this);
 	}

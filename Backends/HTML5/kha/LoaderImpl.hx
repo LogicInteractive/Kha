@@ -40,11 +40,15 @@ class LoaderImpl {
 		var element = Browser.document.createAudioElement();
 		var formats = new Array<String>();
 		// #if !kha_debug_html5
-		if (element.canPlayType("audio/mp4") != "") formats.push("mp4");
-		if (element.canPlayType("audio/mp3") != "") formats.push("mp3");
-		if (element.canPlayType("audio/wav") != "") formats.push("wav");
+		if (element.canPlayType("audio/mp4") != "")
+			formats.push("mp4");
+		if (element.canPlayType("audio/mp3") != "")
+			formats.push("mp3");
+		if (element.canPlayType("audio/wav") != "")
+			formats.push("wav");
 		// #end
-		if (SystemImpl._hasWebAudio || element.canPlayType("audio/ogg") != "") formats.push("ogg");
+		if (SystemImpl._hasWebAudio || element.canPlayType("audio/ogg") != "")
+			formats.push("ogg");
 		return formats;
 	}
 
@@ -107,8 +111,6 @@ class LoaderImpl {
 				for (i in 0...desc.files.length) {
 					var file: String = desc.files[i];
 					if (file.endsWith(".mp3")) {
-						trace(file);
-
 						new MobileWebAudioSound(file, done, failed);
 						return;
 					}
@@ -188,8 +190,8 @@ class LoaderImpl {
 		request.send(null);
 	}
 
-	public static function loadBlobFromDescription(desc: Dynamic, done: Blob -> Void, failed: AssetError -> Void) {
-	#if kha_debug_html5
+	public static function loadBlobFromDescription(desc: Dynamic, done: Blob->Void, failed: AssetError->Void) {
+		#if kha_debug_html5
 		var isUrl = desc.files[0].startsWith('http');
 
 		if (isUrl) {
@@ -202,22 +204,23 @@ class LoaderImpl {
 				var path = Syntax.code("require('electron').remote.require('path')");
 				var app = Syntax.code("require('electron').remote.require('electron').app");
 				var url = if (path.isAbsolute(desc.files[0])) desc.files[0] else path.join(app.getAppPath(), desc.files[0]);
-				fs.readFile(url, function (err, data) {
+				fs.readFile(url, function(err, data) {
 					if (err != null) {
-						failed({ url: url, error: err });
+						failed({url: url, error: err});
 						return;
 					}
-	
+
 					var byteArray: Dynamic = Syntax.code("new Uint8Array(data)");
 					var bytes = Bytes.alloc(byteArray.byteLength);
-					for (i in 0...byteArray.byteLength) bytes.set(i, byteArray[i]);
+					for (i in 0...byteArray.byteLength)
+						bytes.set(i, byteArray[i]);
 					done(new Blob(bytes));
 				});
 			}
 			catch(err:Dynamic)
 			{
 				loadRemote(desc, done, failed);
-			}
+			}				
 		}
 		#else
 		loadRemote(desc, done, failed);

@@ -839,12 +839,15 @@ class Graphics2 extends kha.graphics2.Graphics {
 	var projectionMatrix: FastMatrix4;
 
 	public var imagePainter: ImageShaderPainter;
-	private var coloredPainter: ColoredShaderPainter;
-	private var textPainter: TextShaderPainter;
-	private static var videoPipeline: PipelineState;
+
+	var coloredPainter: ColoredShaderPainter;
+	var textPainter: TextShaderPainter;
+
+	static var videoPipeline: PipelineState;
 	public static var videoPipelineCustom: PipelineState;
-	private var canvas: Canvas;
-	private var g: Graphics;
+	var canvas: Canvas;
+	var g: Graphics;
+
 	static var current: Graphics2 = null;
 
 	public function new(canvas: Canvas) {
@@ -1182,13 +1185,7 @@ class Graphics2 extends kha.graphics2.Graphics {
 	function drawVideoInternal(video: kha.Video, x: Float, y: Float, width: Float, height: Float): Void {}
 
 	override public function drawVideo(video: kha.Video, x: Float, y: Float, width: Float, height: Float): Void {
-
-		//This is a hack!! Another way would be much better
-		if (videoPipelineCustom==null)
-			setPipeline(videoPipeline);
-		else
-			setPipeline(videoPipelineCustom);
-
+		setPipeline(videoPipelineCustom==null ? videoPipeline : videoPipelineCustom);
 		drawVideoInternal(video, x, y, width, height);
 		setPipeline(null);
 	}

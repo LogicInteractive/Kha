@@ -181,7 +181,7 @@ class Window {
 
 	function set_title(value: String): String {
 		return js.Browser.document.title=value;
-	}
+	}	
 
 	public function notifyOnResize(callback: Int->Int->Void): Void {
 		resizeCallbacks[num].push(callback);
