@@ -5,6 +5,7 @@ import js.html.ErrorEvent;
 import js.html.Event;
 import js.html.MediaError;
 import js.html.VideoElement;
+import js.html.MediaStreamEvent;
 
 using StringTools;
 
