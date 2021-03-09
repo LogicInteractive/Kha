@@ -92,7 +92,7 @@ class LoaderImpl {
 				}
 			}
 			failed({
-				url: desc.files.join(','),
+				url: desc.files.join(","),
 				error: "Unable to find sound files with supported audio formats",
 			});
 		}
@@ -133,7 +133,7 @@ class LoaderImpl {
 				}
 			}
 			failed({
-				url: desc.files.join(','),
+				url: desc.files.join(","),
 				error: "Unable to find sound files with supported audio formats",
 			});
 		}
@@ -163,7 +163,7 @@ class LoaderImpl {
 			if (request.readyState != 4)
 				return;
 			if ((request.status >= 200 && request.status < 400)
-				|| (request.status == 0 && request.statusText == '')) { // Blobs loaded using --allow-file-access-from-files
+				|| (request.status == 0 && request.statusText == "")) { // Blobs loaded using --allow-file-access-from-files
 				var bytes: Bytes = null;
 				var arrayBuffer = request.response;
 				if (arrayBuffer != null) {
@@ -192,35 +192,19 @@ class LoaderImpl {
 
 	public static function loadBlobFromDescription(desc: Dynamic, done: Blob->Void, failed: AssetError->Void) {
 		#if kha_debug_html5
-		var isUrl = desc.files[0].startsWith('http');
+		var isUrl = desc.files[0].startsWith("http");
 
 		if (isUrl) {
 			loadRemote(desc, done, failed);
 		}
 		else {
-			try
-			{
-				var fs = Syntax.code("require('electron').remote.require('fs')");
-				var path = Syntax.code("require('electron').remote.require('path')");
-				var app = Syntax.code("require('electron').remote.require('electron').app");
-				var url = if (path.isAbsolute(desc.files[0])) desc.files[0] else path.join(app.getAppPath(), desc.files[0]);
-				fs.readFile(url, function(err, data) {
-					if (err != null) {
-						failed({url: url, error: err});
-						return;
-					}
-
-					var byteArray: Dynamic = Syntax.code("new Uint8Array(data)");
-					var bytes = Bytes.alloc(byteArray.byteLength);
-					for (i in 0...byteArray.byteLength)
-						bytes.set(i, byteArray[i]);
-					done(new Blob(bytes));
-				});
-			}
-			catch(err:Dynamic)
-			{
-				loadRemote(desc, done, failed);
-			}				
+			var loadBlob = Syntax.code("window.electron.loadBlob");
+			loadBlob(desc, (byteArray: Dynamic) -> {
+				var bytes = Bytes.alloc(byteArray.byteLength);
+				for (i in 0...byteArray.byteLength)
+					bytes.set(i, byteArray[i]);
+				done(new Blob(bytes));
+			}, failed);
 		}
 		#else
 		loadRemote(desc, done, failed);
@@ -232,21 +216,4 @@ class LoaderImpl {
 			done(new Font(blob));
 		}, failed);
 	}
-	/*override public function loadURL(url: String): Void {
-			// inDAgo hack
-			if (url.substr(0, 1) == '#')
-				Browser.location.hash = url.substr(1, url.length - 1);
-			else
-				Browser.window.open(url, "Kha");
-		}
-
-		override public function setNormalCursor() {
-			Mouse.SystemCursor = "default";
-			Mouse.UpdateSystemCursor();
-		}
-
-		override public function setHandCursor() {
-			Mouse.SystemCursor = "pointer";
-			Mouse.UpdateSystemCursor();
-	}*/
 }
