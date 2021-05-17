@@ -1,4 +1,3 @@
-#include <Kore/pch.h>
 #include <Kore/Audio1/Sound.h>
 #include <hl.h>
 
@@ -33,7 +32,7 @@ extern "C" bool hl_kore_sound_next_vorbis_samples(vbyte* vorbis, vbyte* samples,
 		else {
 			atend = true;
 		}
-		for (int i = read; i < length; ++i) {
+		for (int i = read * 2; i < length; ++i) {
 			samples[i] = 0;
 		}
 	}

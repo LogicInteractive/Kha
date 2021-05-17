@@ -3,7 +3,6 @@ package kha.netsync;
 import haxe.io.Bytes;
 
 @:headerCode("
-#include <kinc/pch.h>
 #include <kinc/network/socket.h>
 ")
 @:headerClassCode("kinc_socket_t socket;")
@@ -27,7 +26,9 @@ class Network {
 
 	@:functionCode("
 		kinc_socket_init(&socket);
-		kinc_socket_open(&socket, port);
+		kinc_socket_options options;
+		kinc_socket_options_set_defaults(&options);
+		kinc_socket_open(&socket, KINC_SOCKET_PROTOCOL_UDP, port, &options);
 	")
 	public function init(url: String, port: Int) {
 		send(Bytes.ofString("JOIN"), true); // TODO: Discuss, dependency with Server.hx
