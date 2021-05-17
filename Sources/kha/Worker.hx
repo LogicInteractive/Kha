@@ -9,7 +9,7 @@ import sys.io.File;
 
 using haxe.macro.ExprTools;
 
-#if kha_html5
+#if (kha_html5 || kha_krom)
 class Worker {
 	#if kha_in_worker
 	public static function notifyWorker(func: Dynamic->Void): Void {
@@ -26,7 +26,6 @@ class Worker {
 		#end
 	}
 
-	public static function pumpMessages(): Void {}
 	#else
 	#if macro
 	static var threads = new Array<String>();
@@ -77,26 +76,51 @@ class Worker {
 
 #if kha_kore
 import sys.thread.Thread;
+import sys.thread.Tls;
 import kha.Scheduler;
+
+private class Message {
+	public final threadId: Int;
+	public final message: Dynamic;
+
+	public function new(message: Dynamic) {
+		this.threadId = @:privateAccess Worker.threadId.value;
+		this.message = message;
+	}
+}
 
 class Worker {
 	public static var _mainThread: Thread;
 
-	var thread: Thread;
+	static var notifyFuncs: Array<Dynamic->Void> = [];
+	static var taskId: Int = -1;
+	static var nextThreadId: Int = 0;
+	static var threadId = new Tls<Int>();
 
-	function new(thread: Thread) {
+	var thread: Thread;
+	var id: Int;
+
+	function new(thread: Thread, id: Int) {
 		this.thread = thread;
+		this.id = id;
 	}
 
 	public static function create(clazz: Class<Dynamic>): Worker {
-		return new Worker(Thread.create(Reflect.field(clazz, "main")));
+		var id = nextThreadId++;
+		return new Worker(Thread.create(function() {
+			threadId.value = id;
+			Reflect.field(clazz, "main")();
+		}), id);
 	}
 
 	public function notify(func: Dynamic->Void): Void {
-		Scheduler.addFrameTask(function() {
-			var message = Thread.readMessage(false);
+		notifyFuncs[id] = func;
+		if (taskId != -1) return;
+		taskId = Scheduler.addFrameTask(function() {
+			var message:Message = Thread.readMessage(false);
 			if (message != null) {
-				func(message);
+				var func = notifyFuncs[message.threadId];
+				func(message.message);
 			}
 		}, 0);
 	}
@@ -105,22 +129,17 @@ class Worker {
 		thread.sendMessage(message);
 	}
 
-	static var receiver: Dynamic->Void;
-
 	public static function notifyWorker(func: Dynamic->Void): Void {
-		receiver = func;
+		while (true) {
+			var message = Thread.readMessage(true);
+			if (message != null) {
+				func(message);
+			}
+		}
 	}
 
 	public static function postFromWorker(message: Dynamic): Void {
-		_mainThread.sendMessage(message);
-	}
-
-	public static function pumpMessages(): Void {
-		var message = Thread.readMessage(true);
-		while (message != null) {
-			receiver(message);
-			message = Thread.readMessage(true);
-		}
+		_mainThread.sendMessage(new Message(message));
 	}
 }
 #end

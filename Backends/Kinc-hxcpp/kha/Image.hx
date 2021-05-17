@@ -8,7 +8,6 @@ import kha.graphics4.DepthStencilFormat;
 import kha.graphics4.Usage;
 
 @:headerCode("
-#include <kinc/pch.h>
 #include <kinc/graphics4/rendertarget.h>
 #include <kinc/graphics4/texture.h>
 #include <kinc/graphics4/texturearray.h>
@@ -170,9 +169,12 @@ class Image implements Canvas implements Resource {
 	")
 	function nullify() {}
 
-	@:void static function finalize(image: Image): Void {
-		image.unload();
-	}
+	@:functionCode("
+		if (image->imageType != KhaImageTypeNone) {
+			image->unload();
+		}
+	")
+	@:void static function finalize(image: Image): Void {}
 
 	static function getRenderTargetFormat(format: TextureFormat): Int {
 		switch (format) {

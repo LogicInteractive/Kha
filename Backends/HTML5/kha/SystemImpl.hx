@@ -466,23 +466,19 @@ class SystemImpl {
 		canvas.addEventListener("touchmove", touchMove, false);
 		canvas.addEventListener("touchcancel", touchCancel, false);
 
-		#if kha_debug_html5
 		Browser.document.addEventListener("dragover", function(event) {
 			event.preventDefault();
 		});
 
 		Browser.document.addEventListener("drop", function(event: js.html.DragEvent) {
 			event.preventDefault();
-
 			if (event.dataTransfer != null && event.dataTransfer.files != null) {
 				for (file in event.dataTransfer.files) {
-					// https://developer.mozilla.org/en-US/docs/Web/API/File
-					//  - use mozFullPath or webkitRelativePath?
-					System.dropFiles(Syntax.code("file.path"));
+					LoaderImpl.dropFiles.set(file.name, file);
+					System.dropFiles("drop://" + file.name);
 				}
 			}
 		});
-		#end
 
 		Browser.window.addEventListener("unload", function() {
 			System.shutdown();
@@ -521,14 +517,13 @@ class SystemImpl {
 			Scheduler.executeFrame();
 
 			if (canvas.getContext != null) {
-				// Lookup the size the browser is displaying the canvas.
-				// TODO deal with window.devicePixelRatio ?
-				var displayWidth = canvas.clientWidth;
-				var displayHeight = canvas.clientHeight;
+				// clientWidth/Height is in downscaled "css pixels" when a <meta viewport="" /> is set in the html file
+				var displayWidth = Std.int(canvas.clientWidth);
+				var displayHeight = Std.int(canvas.clientHeight);
 
-				// Check if the canvas is not the same size.
+				// Check if the canvas rendering buffer is not the same size.
 				if (canvas.width != displayWidth || canvas.height != displayHeight) {
-					// Make the canvas the same size
+					// Make the canvas rendering buffer the same size
 					canvas.width = displayWidth;
 					canvas.height = displayHeight;
 				}
