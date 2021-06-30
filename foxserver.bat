@@ -1,0 +1,1 @@
+start %FOX%\tools\server\server.exe -document_root %cd%\bin -listening_port 8080
