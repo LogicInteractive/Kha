@@ -1,8 +1,5 @@
 package kha;
 
-import kha.System;
-import kha.graphics4.DepthStencilFormat;
-import kha.graphics4.TextureFormat;
 import kha.input.Gamepad;
 import kha.input.KeyCode;
 import kha.input.Keyboard;
@@ -11,6 +8,9 @@ import kha.input.Pen;
 import kha.input.Sensor;
 import kha.input.SensorType;
 import kha.input.Surface;
+import kha.System;
+import kha.graphics4.TextureFormat;
+import kha.graphics4.DepthStencilFormat;
 #if ANDROID
 #if VR_CARDBOARD
 import kha.kore.vr.CardboardVrInterface;
@@ -359,6 +359,18 @@ class SystemImpl {
 
 	public static function penMove(windowId: Int, x: Int, y: Int, pressure: Float): Void {
 		pen.sendMoveEvent(windowId, x, y, pressure);
+	}
+
+	public static function penEraserDown(windowId: Int, x: Int, y: Int, pressure: Float): Void {
+		pen.sendEraserDownEvent(windowId, x, y, pressure);
+	}
+
+	public static function penEraserUp(windowId: Int, x: Int, y: Int, pressure: Float): Void {
+		pen.sendEraserUpEvent(windowId, x, y, pressure);
+	}
+
+	public static function penEraserMove(windowId: Int, x: Int, y: Int, pressure: Float): Void {
+		pen.sendEraserMoveEvent(windowId, x, y, pressure);
 	}
 
 	public static function gamepadAxis(gamepad: Int, axis: Int, value: Float): Void {
