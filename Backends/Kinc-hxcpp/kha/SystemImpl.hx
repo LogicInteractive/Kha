@@ -1,8 +1,5 @@
 package kha;
 
-import kha.System;
-import kha.graphics4.DepthStencilFormat;
-import kha.graphics4.TextureFormat;
 import kha.input.Gamepad;
 import kha.input.KeyCode;
 import kha.input.Keyboard;
@@ -11,6 +8,9 @@ import kha.input.Pen;
 import kha.input.Sensor;
 import kha.input.SensorType;
 import kha.input.Surface;
+import kha.System;
+import kha.graphics4.TextureFormat;
+import kha.graphics4.DepthStencilFormat;
 #if ANDROID
 #if VR_CARDBOARD
 import kha.kore.vr.CardboardVrInterface;
